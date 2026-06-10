@@ -5,4 +5,6 @@ supabase>=2.15
 PyJWT[crypto]>=2.9
 python-dotenv>=1.0
 python-multipart>=0.0.9
+fpdf2>=2.7
+genanki>=0.13
 pytest>=8.0

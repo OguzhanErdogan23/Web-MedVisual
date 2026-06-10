@@ -9,7 +9,17 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app import dip_client
 from app.config import settings
-from app.routers import books, cards, documents, proxy, quizzes, sets, study
+from app.routers import (
+    books,
+    cards,
+    documents,
+    profile,
+    proxy,
+    quizzes,
+    sets,
+    study,
+    terms,
+)
 
 app = FastAPI(
     title="MedVisual API",
@@ -33,6 +43,8 @@ app.include_router(sets.router)
 app.include_router(cards.router)
 app.include_router(quizzes.router)
 app.include_router(study.router)
+app.include_router(terms.router)
+app.include_router(profile.router)
 app.include_router(proxy.router)
 
 

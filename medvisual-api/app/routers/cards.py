@@ -217,6 +217,28 @@ def upload_image(
     )
 
 
+@router.delete("/{card_id}/image")
+def remove_image(card_id: str, user: AuthUser = Depends(get_current_user)):
+    """Karttaki gorseli kaldirir: image_url=null + Storage dosyasini siler.
+    (Degistirme icin ayri uc gerekmez: select-image/upload-image ayni yola
+    upsert eder, eski gorselin uzerine yazar.)"""
+    card = get_owned_row("flashcards", card_id, user.id)
+    try:
+        get_db().storage.from_(settings.STORAGE_BUCKET).remove(
+            [f"{user.id}/{card_id}.png"]
+        )
+    except Exception:
+        pass  # dosya yoksa veya disaridan URL ise sorun degil
+    return (
+        get_db()
+        .table("flashcards")
+        .update({"image_url": None})
+        .eq("id", card["id"])
+        .execute()
+        .data[0]
+    )
+
+
 @router.patch("/{card_id}")
 def update_card(
     card_id: str, req: CardUpdateReq, user: AuthUser = Depends(get_current_user)

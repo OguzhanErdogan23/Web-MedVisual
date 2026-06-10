@@ -134,3 +134,25 @@ export interface HealthResponse {
   dip_engine: { status: string; detail?: string }
   supabase_configured: boolean
 }
+
+export interface TermsResponse {
+  terms: string[]
+}
+
+export interface StudyHistoryDay {
+  date: string
+  total: number
+  correct: number
+}
+
+export interface StudyHistoryResponse {
+  days: StudyHistoryDay[]
+  total_reviews: number
+}
+
+export interface Profile {
+  id: string
+  display_name: string | null
+  email: string
+  created_at?: string
+}

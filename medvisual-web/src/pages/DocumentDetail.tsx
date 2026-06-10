@@ -89,7 +89,7 @@ export default function DocumentDetail() {
 
   if (docQuery.isError || !doc) {
     return (
-      <div className="mx-auto max-w-2xl rounded-xl border border-red-200 bg-red-50 px-5 py-4 text-sm text-red-700">
+      <div className="mx-auto max-w-2xl rounded-xl border border-red-200 bg-red-50 px-5 py-4 text-sm text-red-700 dark:border-red-900 dark:bg-red-950/40 dark:text-red-300">
         Doküman yüklenemedi: {(docQuery.error as Error)?.message ?? 'bilinmeyen hata'}
       </div>
     )
@@ -98,13 +98,13 @@ export default function DocumentDetail() {
   return (
     <div className="mx-auto max-w-2xl space-y-6">
       {/* Doküman başlığı */}
-      <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+      <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-700 dark:bg-slate-800">
         <div className="flex items-start justify-between gap-4">
           <div>
-            <h1 className="text-xl font-semibold tracking-tight text-slate-900">
+            <h1 className="text-xl font-semibold tracking-tight text-slate-900 dark:text-slate-100">
               {doc.filename}
             </h1>
-            <p className="mt-1 text-sm text-slate-500">
+            <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
               {doc.page_count ?? '?'} sayfa ·{' '}
               {doc.has_text ? 'Metin katmanı var' : 'Metin katmanı yok (OCR gerekebilir)'}
             </p>
@@ -122,8 +122,8 @@ export default function DocumentDetail() {
       </div>
 
       {/* Sekmeler */}
-      <div className="rounded-2xl border border-slate-200 bg-white shadow-sm">
-        <div className="flex border-b border-slate-100">
+      <div className="rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-700 dark:bg-slate-800">
+        <div className="flex border-b border-slate-100 dark:border-slate-700">
           {(
             [
               { key: 'cards', label: '🃏 Bilgi Kartı' },
@@ -135,8 +135,8 @@ export default function DocumentDetail() {
               onClick={() => setSearchParams({ tab: t.key })}
               className={`flex-1 px-4 py-3 text-sm font-medium transition-colors ${
                 tab === t.key
-                  ? 'border-b-2 border-indigo-600 text-indigo-700'
-                  : 'text-slate-500 hover:text-slate-800'
+                  ? 'border-b-2 border-indigo-600 text-indigo-700 dark:text-indigo-400'
+                  : 'text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200'
               }`}
             >
               {t.label}
@@ -146,7 +146,7 @@ export default function DocumentDetail() {
 
         <form onSubmit={handleSubmit} className="space-y-5 p-6">
           <div>
-            <label className="mb-1 block text-sm font-medium text-slate-700">
+            <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">
               Sayfa aralığı
             </label>
             <input
@@ -154,7 +154,7 @@ export default function DocumentDetail() {
               value={range}
               onChange={(e) => setRange(e.target.value)}
               placeholder={`örn. 25-50 (1-${doc.page_count ?? '?'} arası)`}
-              className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-100"
+              className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-100 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-100"
             />
             {range.length > 0 && !rangeValid && (
               <p className="mt-1 text-xs text-red-600">
@@ -166,7 +166,7 @@ export default function DocumentDetail() {
           <div className="grid grid-cols-2 gap-4">
             {tab === 'cards' ? (
               <div>
-                <label className="mb-1 block text-sm font-medium text-slate-700">
+                <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">
                   Maksimum kart sayısı
                 </label>
                 <input
@@ -175,12 +175,12 @@ export default function DocumentDetail() {
                   max={200}
                   value={maxCards}
                   onChange={(e) => setMaxCards(Number(e.target.value))}
-                  className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none"
+                  className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none dark:border-slate-600 dark:bg-slate-900 dark:text-slate-100"
                 />
               </div>
             ) : (
               <div>
-                <label className="mb-1 block text-sm font-medium text-slate-700">
+                <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">
                   Soru sayısı
                 </label>
                 <input
@@ -189,16 +189,16 @@ export default function DocumentDetail() {
                   max={50}
                   value={nQuestions}
                   onChange={(e) => setNQuestions(Number(e.target.value))}
-                  className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none"
+                  className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none dark:border-slate-600 dark:bg-slate-900 dark:text-slate-100"
                 />
               </div>
             )}
             <div>
-              <label className="mb-1 block text-sm font-medium text-slate-700">Kaynak</label>
+              <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">Kaynak</label>
               <select
                 value={source}
                 onChange={(e) => setSource(e.target.value as 'auto' | 'text' | 'ocr')}
-                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none"
+                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none dark:border-slate-600 dark:bg-slate-900 dark:text-slate-100"
               >
                 <option value="auto">Otomatik</option>
                 <option value="text">Metin katmanı</option>
@@ -208,7 +208,7 @@ export default function DocumentDetail() {
           </div>
 
           <div>
-            <label className="mb-1 block text-sm font-medium text-slate-700">
+            <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">
               {tab === 'cards' ? 'Deste başlığı (isteğe bağlı)' : 'Quiz başlığı (isteğe bağlı)'}
             </label>
             <input
@@ -216,11 +216,11 @@ export default function DocumentDetail() {
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               placeholder={tab === 'cards' ? 'örn. Kardiyoloji — Aritmiler' : 'örn. Aritmi Quizi'}
-              className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none"
+              className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none dark:border-slate-600 dark:bg-slate-900 dark:text-slate-100"
             />
           </div>
 
-          <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-slate-200 bg-slate-50/60 p-4">
+          <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-slate-200 bg-slate-50/60 p-4 dark:border-slate-700 dark:bg-slate-900/40">
             <input
               type="checkbox"
               checked={enhance}
@@ -228,12 +228,15 @@ export default function DocumentDetail() {
               className="mt-0.5 h-4 w-4 accent-indigo-600"
             />
             <span>
-              <span className="block text-sm font-medium text-slate-800">
+              <span className="block text-sm font-medium text-slate-800 dark:text-slate-200">
                 Gemini ile zenginleştir
               </span>
-              <span className="block text-xs text-slate-500">
+              <span className="block text-xs text-slate-500 dark:text-slate-400">
                 Daha kaliteli, klinik odaklı {tab === 'cards' ? 'kartlar' : 'sorular'} üretir;
                 üretim biraz daha uzun sürebilir.
+              </span>
+              <span className="mt-0.5 block text-xs font-medium text-indigo-600 dark:text-indigo-400">
+                Daha tutarlı ve klinik odaklı sorular için önerilir.
               </span>
             </span>
           </label>

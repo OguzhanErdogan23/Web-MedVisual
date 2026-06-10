@@ -12,6 +12,7 @@ import SetDetail from './pages/SetDetail'
 import Study from './pages/Study'
 import Quizzes from './pages/Quizzes'
 import QuizPlayer from './pages/QuizPlayer'
+import Settings from './pages/Settings'
 
 function RequireAuth({ children }: { children: ReactNode }) {
   const { session, loading } = useAuth()
@@ -74,6 +75,7 @@ export default function App() {
           <Route path="/study/:setId" element={<Study />} />
           <Route path="/quizzes" element={<Quizzes />} />
           <Route path="/quizzes/:id" element={<QuizPlayer />} />
+          <Route path="/ayarlar" element={<Settings />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Route>
       </Routes>

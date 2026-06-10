@@ -107,7 +107,7 @@ export default function Study() {
 
   if (dueQuery.isError) {
     return (
-      <div className="mx-auto max-w-2xl rounded-xl border border-red-200 bg-red-50 px-5 py-4 text-sm text-red-700">
+      <div className="mx-auto max-w-2xl rounded-xl border border-red-200 bg-red-50 px-5 py-4 text-sm text-red-700 dark:border-red-900 dark:bg-red-950/40 dark:text-red-300">
         Kartlar yüklenemedi: {(dueQuery.error as Error).message}
       </div>
     )
@@ -136,17 +136,17 @@ export default function Study() {
   if (done) {
     return (
       <div className="mx-auto max-w-md">
-        <div className="rounded-2xl border border-slate-200 bg-white p-8 text-center shadow-sm">
+        <div className="rounded-2xl border border-slate-200 bg-white p-8 text-center shadow-sm dark:border-slate-700 dark:bg-slate-800">
           <div className="mb-3 text-4xl">🎉</div>
-          <h1 className="text-xl font-semibold text-slate-900">Oturum tamamlandı!</h1>
-          <p className="mt-1 text-sm text-slate-500">{totalGraded} kart çalıştınız.</p>
+          <h1 className="text-xl font-semibold text-slate-900 dark:text-slate-100">Oturum tamamlandı!</h1>
+          <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">{totalGraded} kart çalıştınız.</p>
           <div className="mt-6 grid grid-cols-4 gap-2">
             {GRADES.map((g) => (
-              <div key={g.grade} className="rounded-xl bg-slate-50 p-3">
-                <p className="text-lg font-semibold text-slate-900">
+              <div key={g.grade} className="rounded-xl bg-slate-50 p-3 dark:bg-slate-900">
+                <p className="text-lg font-semibold text-slate-900 dark:text-slate-100">
                   {gradeCounts[g.grade] ?? 0}
                 </p>
-                <p className="text-xs text-slate-500">{g.label}</p>
+                <p className="text-xs text-slate-500 dark:text-slate-400">{g.label}</p>
               </div>
             ))}
           </div>
@@ -168,13 +168,13 @@ export default function Study() {
     <div className="mx-auto flex max-w-2xl flex-col items-center gap-6">
       {/* İlerleme */}
       <div className="w-full">
-        <div className="mb-1.5 flex justify-between text-xs font-medium text-slate-500">
+        <div className="mb-1.5 flex justify-between text-xs font-medium text-slate-500 dark:text-slate-400">
           <span>
             Kart {index + 1} / {queue.length}
           </span>
           <span>Kalan {remaining}</span>
         </div>
-        <div className="h-2 w-full overflow-hidden rounded-full bg-slate-200">
+        <div className="h-2 w-full overflow-hidden rounded-full bg-slate-200 dark:bg-slate-700">
           <div
             className="h-full rounded-full bg-indigo-600 transition-all"
             style={{ width: `${progress}%` }}
@@ -185,11 +185,11 @@ export default function Study() {
       {/* Kart */}
       <button
         onClick={() => !flipped && setFlipped(true)}
-        className={`flex min-h-[320px] w-full flex-col items-center justify-center gap-4 rounded-3xl border bg-white p-8 text-center shadow-sm transition-shadow ${
-          flipped ? 'border-teal-200' : 'cursor-pointer border-slate-200 hover:shadow-md'
+        className={`flex min-h-[320px] w-full flex-col items-center justify-center gap-4 rounded-3xl border bg-white p-8 text-center shadow-sm transition-shadow dark:bg-slate-800 ${
+          flipped ? 'border-teal-200 dark:border-teal-800' : 'cursor-pointer border-slate-200 hover:shadow-md dark:border-slate-700'
         }`}
       >
-        <span className="text-[10px] font-semibold uppercase tracking-widest text-slate-400">
+        <span className="text-[10px] font-semibold uppercase tracking-widest text-slate-400 dark:text-slate-500">
           {flipped ? 'Cevap' : 'Soru'}
         </span>
         {current!.image_url && (
@@ -199,11 +199,11 @@ export default function Study() {
             className="max-h-44 rounded-xl border border-slate-100 bg-slate-50 object-contain"
           />
         )}
-        <p className="whitespace-pre-wrap text-lg font-medium text-slate-900">
+        <p className="whitespace-pre-wrap text-lg font-medium text-slate-900 dark:text-slate-100">
           {flipped ? current!.back : current!.front}
         </p>
         {!flipped && (
-          <span className="mt-2 text-xs text-slate-400">
+          <span className="mt-2 text-xs text-slate-400 dark:text-slate-500">
             Çevirmek için tıklayın veya Boşluk tuşuna basın
           </span>
         )}
@@ -231,7 +231,7 @@ export default function Study() {
           ))}
         </div>
       ) : (
-        <p className="text-xs text-slate-400">
+        <p className="text-xs text-slate-400 dark:text-slate-500">
           Cevabı gördükten sonra 1-4 tuşlarıyla değerlendirme yapabilirsiniz.
         </p>
       )}

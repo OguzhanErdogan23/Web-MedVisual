@@ -49,8 +49,8 @@ export default function UploadDropzone() {
       onClick={() => inputRef.current?.click()}
       className={`flex cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed px-6 py-10 text-center transition-colors ${
         dragOver
-          ? 'border-indigo-400 bg-indigo-50'
-          : 'border-slate-300 bg-white hover:border-indigo-300 hover:bg-indigo-50/40'
+          ? 'border-indigo-400 bg-indigo-50 dark:border-indigo-500 dark:bg-indigo-950/40'
+          : 'border-slate-300 bg-white hover:border-indigo-300 hover:bg-indigo-50/40 dark:border-slate-600 dark:bg-slate-800 dark:hover:border-indigo-700 dark:hover:bg-indigo-950/30'
       }`}
     >
       <input
@@ -66,15 +66,15 @@ export default function UploadDropzone() {
       {upload.isPending ? (
         <div className="flex flex-col items-center gap-3">
           <Spinner size={7} />
-          <p className="text-sm font-medium text-slate-600">PDF yükleniyor...</p>
+          <p className="text-sm font-medium text-slate-600 dark:text-slate-300">PDF yükleniyor...</p>
         </div>
       ) : (
         <>
           <div className="mb-2 text-3xl">📎</div>
-          <p className="text-sm font-semibold text-slate-700">
+          <p className="text-sm font-semibold text-slate-700 dark:text-slate-200">
             PDF dosyanızı buraya sürükleyin veya tıklayıp seçin
           </p>
-          <p className="mt-1 text-xs text-slate-500">
+          <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
             Ders notu, kitap bölümü veya makale — motor işledikten sonra kart ve quiz üretebilirsiniz.
           </p>
         </>

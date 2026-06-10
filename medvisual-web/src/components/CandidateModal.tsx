@@ -403,8 +403,8 @@ export default function CandidateModal({
         </div>
       ) : (
         <>
-          <p className="mb-4 text-sm text-slate-600">
-            <span className="font-medium text-slate-800">
+          <p className="mb-4 text-sm text-slate-600 dark:text-slate-300">
+            <span className="font-medium text-slate-800 dark:text-slate-100">
               {card.term || card.front.slice(0, 60)}
             </span>{' '}
             için doküman sayfalarında şekil/figür aranacak.
@@ -412,20 +412,20 @@ export default function CandidateModal({
 
           {!documentId && (
             <div className="mb-4">
-              <label className="mb-1 block text-sm font-medium text-slate-700">
+              <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">
                 Doküman seç
               </label>
               {docsQuery.isLoading ? (
                 <Spinner size={5} />
               ) : readyDocs.length === 0 ? (
-                <p className="text-sm text-slate-500">
+                <p className="text-sm text-slate-500 dark:text-slate-400">
                   Hazır durumda doküman yok. Önce panelden bir PDF yükleyin.
                 </p>
               ) : (
                 <select
                   value={docId ?? ''}
                   onChange={(e) => setDocId(e.target.value || null)}
-                  className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none"
+                  className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none dark:border-slate-600 dark:bg-slate-900 dark:text-slate-100"
                 >
                   <option value="">— Doküman seçin —</option>
                   {readyDocs.map((d) => (
@@ -440,7 +440,7 @@ export default function CandidateModal({
 
           <div className="mb-4 flex items-end gap-3">
             <div className="flex-1">
-              <label className="mb-1 block text-sm font-medium text-slate-700">
+              <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">
                 Sayfa aralığı
               </label>
               <input
@@ -448,7 +448,7 @@ export default function CandidateModal({
                 value={range}
                 onChange={(e) => setRange(e.target.value)}
                 placeholder="örn. 10-40"
-                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none"
+                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none dark:border-slate-600 dark:bg-slate-900 dark:text-slate-100"
               />
             </div>
             <button

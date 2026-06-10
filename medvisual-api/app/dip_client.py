@@ -62,6 +62,11 @@ def health() -> dict:
     return _get("/api/health")
 
 
+def terms() -> dict:
+    """-> {terms: [...]} Latince sozluk."""
+    return _get("/api/terms")
+
+
 def upload_pdf(filename: str, content: bytes) -> dict:
     """-> {doc_id, filename, page_count, has_text}"""
     return _post(

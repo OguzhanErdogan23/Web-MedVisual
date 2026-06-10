@@ -13,6 +13,7 @@ import type {
   BooksResponse,
   DocumentRow,
   DocumentsResponse,
+  StudyHistoryResponse,
   StudyStats,
 } from '../types'
 
@@ -21,17 +22,91 @@ const EXPIRED_HINT =
 
 function StatCard({ label, value, icon }: { label: string; value: number | string; icon: string }) {
   return (
-    <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+    <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-700 dark:bg-slate-800">
       <div className="flex items-center gap-3">
-        <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-indigo-50 text-lg">
+        <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-indigo-50 text-lg dark:bg-indigo-950/60">
           {icon}
         </span>
         <div>
-          <p className="text-2xl font-semibold text-slate-900">{value}</p>
-          <p className="text-xs font-medium text-slate-500">{label}</p>
+          <p className="text-2xl font-semibold text-slate-900 dark:text-slate-100">{value}</p>
+          <p className="text-xs font-medium text-slate-500 dark:text-slate-400">{label}</p>
         </div>
       </div>
     </div>
+  )
+}
+
+function StudyProgress({ data }: { data: StudyHistoryResponse }) {
+  const days = data.days
+  const maxTotal = Math.max(1, ...days.map((d) => d.total))
+  const totalReviews = data.total_reviews
+  const totalCorrect = days.reduce((sum, d) => sum + d.correct, 0)
+  const accuracy = totalReviews > 0 ? Math.round((totalCorrect / totalReviews) * 100) : 0
+
+  if (totalReviews === 0) {
+    return (
+      <section>
+        <h2 className="mb-4 text-lg font-semibold text-slate-900 dark:text-slate-100">
+          Çalışma İlerlemesi
+        </h2>
+        <div className="rounded-2xl border border-dashed border-slate-300 bg-white px-6 py-12 text-center text-sm text-slate-500 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-400">
+          Henüz çalışma verisi yok — kart çalışmaya başla.
+        </div>
+      </section>
+    )
+  }
+
+  return (
+    <section>
+      <h2 className="mb-1 text-lg font-semibold text-slate-900 dark:text-slate-100">
+        Çalışma İlerlemesi
+      </h2>
+      <p className="mb-4 text-sm text-slate-500 dark:text-slate-400">
+        Son 14 günde {totalReviews} tekrar, ortalama doğruluk %{accuracy}
+      </p>
+      <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-700 dark:bg-slate-800">
+        <div className="flex h-40 items-end justify-between gap-1.5">
+          {days.map((d) => {
+            const heightPct = (d.total / maxTotal) * 100
+            const correctPct = d.total > 0 ? (d.correct / d.total) * 100 : 0
+            const dayLabel = new Date(d.date).toLocaleDateString('tr-TR', {
+              day: '2-digit',
+              month: '2-digit',
+            })
+            return (
+              <div key={d.date} className="flex flex-1 flex-col items-center gap-1">
+                <div
+                  className="flex w-full flex-col justify-end overflow-hidden rounded-md bg-slate-100 dark:bg-slate-700"
+                  style={{ height: '100%' }}
+                  title={`${dayLabel}: ${d.total} tekrar, ${d.correct} doğru`}
+                >
+                  <div
+                    className="flex w-full flex-col justify-end rounded-md bg-indigo-200 dark:bg-indigo-900/60"
+                    style={{ height: `${heightPct}%` }}
+                  >
+                    <div
+                      className="w-full rounded-b-md bg-green-500"
+                      style={{ height: `${correctPct}%` }}
+                    />
+                  </div>
+                </div>
+                <span className="text-[9px] text-slate-400 dark:text-slate-500">
+                  {dayLabel.slice(0, 2)}
+                </span>
+              </div>
+            )
+          })}
+        </div>
+        <div className="mt-4 flex items-center gap-4 text-xs text-slate-500 dark:text-slate-400">
+          <span className="inline-flex items-center gap-1.5">
+            <span className="h-2.5 w-2.5 rounded-sm bg-green-500" /> Doğru
+          </span>
+          <span className="inline-flex items-center gap-1.5">
+            <span className="h-2.5 w-2.5 rounded-sm bg-indigo-200 dark:bg-indigo-900/60" /> Toplam tekrar
+          </span>
+        </div>
+      </div>
+    </section>
   )
 }
 
@@ -45,6 +120,11 @@ export default function Dashboard() {
   const statsQuery = useQuery({
     queryKey: ['study-stats'],
     queryFn: () => api.get<StudyStats>('/study/stats'),
+  })
+
+  const historyQuery = useQuery({
+    queryKey: ['study-history'],
+    queryFn: () => api.get<StudyHistoryResponse>('/study/history?days=14'),
   })
 
   const docsQuery = useQuery({
@@ -88,8 +168,8 @@ export default function Dashboard() {
   return (
     <div className="mx-auto max-w-6xl space-y-8">
       <div>
-        <h1 className="text-2xl font-semibold tracking-tight text-slate-900">Panel</h1>
-        <p className="mt-1 text-sm text-slate-500">
+        <h1 className="text-2xl font-semibold tracking-tight text-slate-900 dark:text-slate-100">Panel</h1>
+        <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
           Hoş geldiniz! PDF yükleyin, kart ve quiz üretin, çalışmaya başlayın.
         </p>
       </div>
@@ -102,13 +182,16 @@ export default function Dashboard() {
         <StatCard label="Bugün çalışılacak" value={stats?.due_now ?? '—'} icon="⏰" />
       </div>
 
+      {/* Çalışma ilerlemesi */}
+      {historyQuery.data && <StudyProgress data={historyQuery.data} />}
+
       {/* Yükleme */}
       <UploadDropzone />
 
       {/* Doküman listesi */}
       <section>
         <div className="mb-4 flex items-center justify-between">
-          <h2 className="text-lg font-semibold text-slate-900">Dokümanlar</h2>
+          <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100">Dokümanlar</h2>
           <button
             onClick={() => setLibraryOpen(true)}
             className="rounded-lg border border-indigo-200 bg-indigo-50 px-4 py-2 text-sm font-medium text-indigo-700 hover:bg-indigo-100"
@@ -138,10 +221,10 @@ export default function Dashboard() {
             }
           />
         ) : (
-          <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+          <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-700 dark:bg-slate-800">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-slate-100 bg-slate-50/60 text-left text-xs font-medium uppercase tracking-wide text-slate-500">
+                <tr className="border-b border-slate-100 bg-slate-50/60 text-left text-xs font-medium uppercase tracking-wide text-slate-500 dark:border-slate-700 dark:bg-slate-900/40 dark:text-slate-400">
                   <th className="px-5 py-3">Dosya</th>
                   <th className="px-5 py-3">Sayfa</th>
                   <th className="px-5 py-3">Durum</th>
@@ -151,20 +234,20 @@ export default function Dashboard() {
               </thead>
               <tbody>
                 {documents.map((doc) => (
-                  <tr key={doc.id} className="border-b border-slate-50 last:border-0 hover:bg-slate-50/40">
+                  <tr key={doc.id} className="border-b border-slate-50 last:border-0 hover:bg-slate-50/40 dark:border-slate-700/60 dark:hover:bg-slate-700/30">
                     <td className="px-5 py-3.5">
-                      <span className="font-medium text-slate-800">{doc.filename}</span>
+                      <span className="font-medium text-slate-800 dark:text-slate-200">{doc.filename}</span>
                       {(doc.status === 'failed' || doc.status === 'expired') && (
-                        <p className="mt-0.5 text-xs text-red-600">
+                        <p className="mt-0.5 text-xs text-red-600 dark:text-red-400">
                           {doc.status === 'expired' ? EXPIRED_HINT : doc.error}
                         </p>
                       )}
                     </td>
-                    <td className="px-5 py-3.5 text-slate-500">{doc.page_count ?? '—'}</td>
+                    <td className="px-5 py-3.5 text-slate-500 dark:text-slate-400">{doc.page_count ?? '—'}</td>
                     <td className="px-5 py-3.5">
                       <StatusBadge status={doc.status} />
                     </td>
-                    <td className="px-5 py-3.5 text-slate-500">
+                    <td className="px-5 py-3.5 text-slate-500 dark:text-slate-400">
                       {new Date(doc.created_at).toLocaleDateString('tr-TR')}
                     </td>
                     <td className="px-5 py-3.5">

@@ -3,7 +3,15 @@ import { Link, useParams } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { api } from '../lib/api'
 import Spinner from '../components/Spinner'
+import ExportMenu from '../components/ExportMenu'
 import type { QuizDetail } from '../types'
+
+const QUIZ_EXPORT_FORMATS = [
+  { value: 'json', label: 'JSON', ext: 'json' },
+  { value: 'csv', label: 'CSV', ext: 'csv' },
+  { value: 'txt', label: 'TXT', ext: 'txt' },
+  { value: 'pdf', label: 'PDF', ext: 'pdf' },
+]
 
 export default function QuizPlayer() {
   const { id } = useParams<{ id: string }>()
@@ -30,7 +38,7 @@ export default function QuizPlayer() {
 
   if (quizQuery.isError || !quiz) {
     return (
-      <div className="mx-auto max-w-2xl rounded-xl border border-red-200 bg-red-50 px-5 py-4 text-sm text-red-700">
+      <div className="mx-auto max-w-2xl rounded-xl border border-red-200 bg-red-50 px-5 py-4 text-sm text-red-700 dark:border-red-900 dark:bg-red-950/40 dark:text-red-300">
         Quiz yüklenemedi: {(quizQuery.error as Error)?.message ?? 'bilinmeyen hata'}
       </div>
     )
@@ -39,14 +47,14 @@ export default function QuizPlayer() {
   if (quiz.status === 'generating') {
     return (
       <div className="mx-auto max-w-2xl space-y-4">
-        <div className="flex items-center justify-center gap-3 rounded-2xl border border-indigo-100 bg-indigo-50/60 py-6">
+        <div className="flex items-center justify-center gap-3 rounded-2xl border border-indigo-100 bg-indigo-50/60 py-6 dark:border-indigo-900 dark:bg-indigo-950/40">
           <Spinner size={6} />
-          <p className="text-sm font-medium text-indigo-700">
+          <p className="text-sm font-medium text-indigo-700 dark:text-indigo-300">
             Sorular üretiliyor... Bu sayfa otomatik güncellenecek.
           </p>
         </div>
         {[1, 2, 3].map((i) => (
-          <div key={i} className="h-32 animate-pulse rounded-2xl bg-slate-200/60" />
+          <div key={i} className="h-32 animate-pulse rounded-2xl bg-slate-200/60 dark:bg-slate-700/40" />
         ))}
       </div>
     )
@@ -54,7 +62,7 @@ export default function QuizPlayer() {
 
   if (quiz.status === 'failed') {
     return (
-      <div className="mx-auto max-w-2xl rounded-2xl border border-red-200 bg-red-50 px-5 py-6 text-sm text-red-700">
+      <div className="mx-auto max-w-2xl rounded-2xl border border-red-200 bg-red-50 px-5 py-6 text-sm text-red-700 dark:border-red-900 dark:bg-red-950/40 dark:text-red-300">
         <p className="font-semibold">Quiz üretimi başarısız oldu</p>
         <p className="mt-1">{quiz.error ?? 'Bilinmeyen bir hata oluştu.'}</p>
       </div>
@@ -65,7 +73,7 @@ export default function QuizPlayer() {
 
   if (questions.length === 0) {
     return (
-      <div className="mx-auto max-w-2xl rounded-2xl border border-slate-200 bg-white px-5 py-10 text-center text-sm text-slate-500">
+      <div className="mx-auto max-w-2xl rounded-2xl border border-slate-200 bg-white px-5 py-10 text-center text-sm text-slate-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-400">
         Bu quizde soru bulunmuyor.
       </div>
     )
@@ -79,11 +87,11 @@ export default function QuizPlayer() {
     const pct = Math.round((correct / questions.length) * 100)
     return (
       <div className="mx-auto max-w-2xl space-y-6">
-        <div className="rounded-2xl border border-slate-200 bg-white p-8 text-center shadow-sm">
+        <div className="rounded-2xl border border-slate-200 bg-white p-8 text-center shadow-sm dark:border-slate-700 dark:bg-slate-800">
           <div className="mb-2 text-4xl">{pct >= 70 ? '🏆' : pct >= 50 ? '👍' : '📚'}</div>
-          <h1 className="text-xl font-semibold text-slate-900">{quiz.title} — Sonuç</h1>
-          <p className="mt-3 text-4xl font-bold text-indigo-600">%{pct}</p>
-          <p className="mt-1 text-sm text-slate-500">
+          <h1 className="text-xl font-semibold text-slate-900 dark:text-slate-100">{quiz.title} — Sonuç</h1>
+          <p className="mt-3 text-4xl font-bold text-indigo-600 dark:text-indigo-400">%{pct}</p>
+          <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
             {questions.length} sorudan {correct} doğru
           </p>
           <div className="mt-6 flex justify-center gap-3">
@@ -99,27 +107,32 @@ export default function QuizPlayer() {
             </button>
             <Link
               to="/quizzes"
-              className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
+              className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 dark:border-slate-600 dark:text-slate-200 dark:hover:bg-slate-700"
             >
               Quizlere dön
             </Link>
+            <ExportMenu
+              basePath={`/quizzes/${quiz.id}/export`}
+              fallbackBaseName={quiz.title}
+              formats={QUIZ_EXPORT_FORMATS}
+            />
           </div>
         </div>
 
         {/* Soru bazlı inceleme */}
         <div className="space-y-3">
-          <h2 className="text-base font-semibold text-slate-900">Soru incelemesi</h2>
+          <h2 className="text-base font-semibold text-slate-900 dark:text-slate-100">Soru incelemesi</h2>
           {questions.map((q, i) => {
             const userAnswer = answers[i]
             const isCorrect = userAnswer === q.answer_index
             return (
               <div
                 key={i}
-                className={`rounded-2xl border bg-white p-5 shadow-sm ${
-                  isCorrect ? 'border-green-200' : 'border-red-200'
+                className={`rounded-2xl border bg-white p-5 shadow-sm dark:bg-slate-800 ${
+                  isCorrect ? 'border-green-200 dark:border-green-900' : 'border-red-200 dark:border-red-900'
                 }`}
               >
-                <p className="text-sm font-medium text-slate-800">
+                <p className="text-sm font-medium text-slate-800 dark:text-slate-200">
                   {i + 1}. {q.question}
                 </p>
                 <div className="mt-3 space-y-1.5 text-sm">
@@ -153,13 +166,20 @@ export default function QuizPlayer() {
   return (
     <div className="mx-auto max-w-2xl space-y-6">
       <div>
-        <div className="mb-1.5 flex justify-between text-xs font-medium text-slate-500">
+        <div className="mb-2 flex items-center justify-end">
+          <ExportMenu
+            basePath={`/quizzes/${quiz.id}/export`}
+            fallbackBaseName={quiz.title}
+            formats={QUIZ_EXPORT_FORMATS}
+          />
+        </div>
+        <div className="mb-1.5 flex justify-between text-xs font-medium text-slate-500 dark:text-slate-400">
           <span>{quiz.title}</span>
           <span>
             Soru {index + 1} / {questions.length}
           </span>
         </div>
-        <div className="h-2 w-full overflow-hidden rounded-full bg-slate-200">
+        <div className="h-2 w-full overflow-hidden rounded-full bg-slate-200 dark:bg-slate-700">
           <div
             className="h-full rounded-full bg-indigo-600 transition-all"
             style={{ width: `${(index / questions.length) * 100}%` }}
@@ -167,19 +187,19 @@ export default function QuizPlayer() {
         </div>
       </div>
 
-      <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-        <p className="text-base font-medium text-slate-900">{q.question}</p>
+      <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-700 dark:bg-slate-800">
+        <p className="text-base font-medium text-slate-900 dark:text-slate-100">{q.question}</p>
         <div className="mt-5 space-y-2.5">
           {q.options.map((opt, oi) => {
             let classes =
-              'border-slate-200 bg-white hover:border-indigo-300 hover:bg-indigo-50/40'
+              'border-slate-200 bg-white text-slate-800 hover:border-indigo-300 hover:bg-indigo-50/40 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-200 dark:hover:border-indigo-700 dark:hover:bg-indigo-950/40'
             if (answered) {
               if (oi === q.answer_index) {
-                classes = 'border-green-400 bg-green-50 text-green-900'
+                classes = 'border-green-400 bg-green-50 text-green-900 dark:border-green-700 dark:bg-green-950/40 dark:text-green-300'
               } else if (oi === selected) {
-                classes = 'border-red-400 bg-red-50 text-red-900'
+                classes = 'border-red-400 bg-red-50 text-red-900 dark:border-red-700 dark:bg-red-950/40 dark:text-red-300'
               } else {
-                classes = 'border-slate-200 bg-white opacity-60'
+                classes = 'border-slate-200 bg-white opacity-60 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-300'
               }
             }
             return (

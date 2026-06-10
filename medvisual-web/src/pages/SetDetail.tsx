@@ -1,33 +1,37 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { api, API_URL, getAccessToken } from '../lib/api'
 import { useToast } from '../hooks/useToast'
+import { useTerms } from '../hooks/useTerms'
 import StatusBadge from '../components/StatusBadge'
 import Modal from '../components/Modal'
 import Spinner from '../components/Spinner'
 import EmptyState from '../components/EmptyState'
 import ConfirmDialog from '../components/ConfirmDialog'
 import CandidateModal from '../components/CandidateModal'
-import type { CardRow, SetDetail as SetDetailType } from '../types'
+import ExportMenu from '../components/ExportMenu'
+import type {
+  CardRow,
+  DocumentsResponse,
+  SetDetail as SetDetailType,
+} from '../types'
+
+const TERMS_LIST_ID = 'medvisual-terms'
+
+const SET_EXPORT_FORMATS = [
+  { value: 'json', label: 'JSON', ext: 'json' },
+  { value: 'csv', label: 'CSV', ext: 'csv' },
+  { value: 'tsv', label: 'TSV', ext: 'tsv' },
+  { value: 'anki', label: 'Anki', ext: 'txt' },
+  { value: 'txt', label: 'TXT', ext: 'txt' },
+  { value: 'pdf', label: 'PDF', ext: 'pdf' },
+  { value: 'apkg', label: 'APKG', ext: 'apkg' },
+]
 
 function resolveImageUrl(url: string, token: string | null): string {
   if (url.startsWith('http://') || url.startsWith('https://')) return url
   return `${API_URL}${url}?token=${token ?? ''}`
-}
-
-function downloadFile(filename: string, content: string, mime: string) {
-  const blob = new Blob([content], { type: mime })
-  const a = document.createElement('a')
-  a.href = URL.createObjectURL(blob)
-  a.download = filename
-  a.click()
-  URL.revokeObjectURL(a.href)
-}
-
-function csvEscape(value: string): string {
-  if (/[",\n]/.test(value)) return `"${value.replace(/"/g, '""')}"`
-  return value
 }
 
 function CardItem({
@@ -47,11 +51,14 @@ function CardItem({
   const [editing, setEditing] = useState(false)
   const [front, setFront] = useState(card.front)
   const [back, setBack] = useState(card.back)
+  const [term, setTerm] = useState(card.term ?? '')
   const [matchOpen, setMatchOpen] = useState(false)
   const [confirmDelete, setConfirmDelete] = useState(false)
+  const [confirmRemoveImage, setConfirmRemoveImage] = useState(false)
 
   const update = useMutation({
-    mutationFn: () => api.patch<CardRow>(`/cards/${card.id}`, { front, back }),
+    mutationFn: () =>
+      api.patch<CardRow>(`/cards/${card.id}`, { front, back, term: term.trim() || null }),
     onSuccess: () => {
       toast('Kart güncellendi.', 'success')
       setEditing(false)
@@ -70,36 +77,72 @@ function CardItem({
     onError: (err: Error) => toast(err.message),
   })
 
+  const removeImage = useMutation({
+    mutationFn: () => api.delete<CardRow>(`/cards/${card.id}/image`),
+    onSuccess: () => {
+      toast('Görsel kaldırıldı.', 'success')
+      setConfirmRemoveImage(false)
+      queryClient.invalidateQueries({ queryKey: ['set', setId] })
+    },
+    onError: (err: Error) => toast(err.message),
+  })
+
   return (
-    <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+    <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-700 dark:bg-slate-800">
       <div className="flex gap-4">
         {card.image_url && (
-          <img
-            src={resolveImageUrl(card.image_url, token)}
-            alt="Kart görseli"
-            className="h-24 w-28 shrink-0 rounded-lg border border-slate-100 bg-slate-50 object-contain"
-            loading="lazy"
-          />
+          <div className="flex shrink-0 flex-col items-center gap-1.5">
+            <img
+              src={resolveImageUrl(card.image_url, token)}
+              alt="Kart görseli"
+              className="h-24 w-28 rounded-lg border border-slate-100 bg-slate-50 object-contain dark:border-slate-700 dark:bg-slate-900"
+              loading="lazy"
+            />
+            <div className="flex gap-1">
+              <button
+                onClick={() => setMatchOpen(true)}
+                className="rounded-md border border-slate-200 px-2 py-0.5 text-[11px] font-medium text-slate-600 hover:bg-slate-50 dark:border-slate-600 dark:text-slate-300 dark:hover:bg-slate-700"
+              >
+                Değiştir
+              </button>
+              <button
+                onClick={() => setConfirmRemoveImage(true)}
+                className="rounded-md border border-slate-200 px-2 py-0.5 text-[11px] font-medium text-slate-600 hover:border-red-200 hover:bg-red-50 hover:text-red-700 dark:border-slate-600 dark:text-slate-300 dark:hover:border-red-900 dark:hover:bg-red-950/40 dark:hover:text-red-400"
+              >
+                Kaldır
+              </button>
+            </div>
+          </div>
         )}
         <div className="min-w-0 flex-1">
           {editing ? (
             <div className="space-y-3">
               <div>
-                <label className="mb-1 block text-xs font-medium text-slate-500">Ön yüz</label>
+                <label className="mb-1 block text-xs font-medium text-slate-500 dark:text-slate-400">Ön yüz</label>
                 <textarea
                   value={front}
                   onChange={(e) => setFront(e.target.value)}
                   rows={2}
-                  className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none"
+                  className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none dark:border-slate-600 dark:bg-slate-900 dark:text-slate-100"
                 />
               </div>
               <div>
-                <label className="mb-1 block text-xs font-medium text-slate-500">Arka yüz</label>
+                <label className="mb-1 block text-xs font-medium text-slate-500 dark:text-slate-400">Arka yüz</label>
                 <textarea
                   value={back}
                   onChange={(e) => setBack(e.target.value)}
                   rows={3}
-                  className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none"
+                  className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none dark:border-slate-600 dark:bg-slate-900 dark:text-slate-100"
+                />
+              </div>
+              <div>
+                <label className="mb-1 block text-xs font-medium text-slate-500 dark:text-slate-400">Terim</label>
+                <input
+                  type="text"
+                  value={term}
+                  onChange={(e) => setTerm(e.target.value)}
+                  list={TERMS_LIST_ID}
+                  className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none dark:border-slate-600 dark:bg-slate-900 dark:text-slate-100"
                 />
               </div>
               <div className="flex gap-2">
@@ -118,8 +161,9 @@ function CardItem({
                     setEditing(false)
                     setFront(card.front)
                     setBack(card.back)
+                    setTerm(card.term ?? '')
                   }}
-                  className="rounded-lg border border-slate-300 px-3 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-50"
+                  className="rounded-lg border border-slate-300 px-3 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-50 dark:border-slate-600 dark:text-slate-300 dark:hover:bg-slate-700"
                 >
                   Vazgeç
                 </button>
@@ -131,10 +175,10 @@ function CardItem({
               className="block w-full cursor-pointer text-left"
               title="Çevirmek için tıklayın"
             >
-              <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">
+              <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400 dark:text-slate-500">
                 {flipped ? 'Arka yüz' : 'Ön yüz'} — çevirmek için tıklayın
               </p>
-              <p className="mt-1 whitespace-pre-wrap text-sm text-slate-800">
+              <p className="mt-1 whitespace-pre-wrap text-sm text-slate-800 dark:text-slate-200">
                 {flipped ? card.back : card.front}
               </p>
             </button>
@@ -142,17 +186,17 @@ function CardItem({
 
           <div className="mt-3 flex flex-wrap items-center gap-2">
             {card.term && (
-              <span className="rounded-full bg-indigo-50 px-2.5 py-0.5 text-xs font-medium text-indigo-700">
+              <span className="rounded-full bg-indigo-50 px-2.5 py-0.5 text-xs font-medium text-indigo-700 dark:bg-indigo-950/60 dark:text-indigo-300">
                 {card.term}
               </span>
             )}
             {card.page !== null && (
-              <span className="rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-medium text-slate-500">
+              <span className="rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-medium text-slate-500 dark:bg-slate-700 dark:text-slate-300">
                 Sayfa {card.page}
               </span>
             )}
             {card.kind && (
-              <span className="rounded-full bg-teal-50 px-2.5 py-0.5 text-xs font-medium text-teal-700">
+              <span className="rounded-full bg-teal-50 px-2.5 py-0.5 text-xs font-medium text-teal-700 dark:bg-teal-950/60 dark:text-teal-300">
                 {card.kind}
               </span>
             )}
@@ -161,21 +205,23 @@ function CardItem({
 
         {!editing && (
           <div className="flex shrink-0 flex-col items-end gap-1.5">
-            <button
-              onClick={() => setMatchOpen(true)}
-              className="rounded-lg border border-indigo-200 bg-indigo-50 px-2.5 py-1 text-xs font-medium text-indigo-700 hover:bg-indigo-100"
-            >
-              🔎 Görsel Bul
-            </button>
+            {!card.image_url && (
+              <button
+                onClick={() => setMatchOpen(true)}
+                className="rounded-lg border border-indigo-200 bg-indigo-50 px-2.5 py-1 text-xs font-medium text-indigo-700 hover:bg-indigo-100 dark:border-indigo-900 dark:bg-indigo-950/60 dark:text-indigo-300 dark:hover:bg-indigo-900/60"
+              >
+                🔎 Görsel Bul
+              </button>
+            )}
             <button
               onClick={() => setEditing(true)}
-              className="rounded-lg border border-slate-200 px-2.5 py-1 text-xs font-medium text-slate-600 hover:bg-slate-50"
+              className="rounded-lg border border-slate-200 px-2.5 py-1 text-xs font-medium text-slate-600 hover:bg-slate-50 dark:border-slate-600 dark:text-slate-300 dark:hover:bg-slate-700"
             >
               Düzenle
             </button>
             <button
               onClick={() => setConfirmDelete(true)}
-              className="rounded-lg border border-slate-200 px-2.5 py-1 text-xs font-medium text-slate-600 hover:border-red-200 hover:bg-red-50 hover:text-red-700"
+              className="rounded-lg border border-slate-200 px-2.5 py-1 text-xs font-medium text-slate-600 hover:border-red-200 hover:bg-red-50 hover:text-red-700 dark:border-slate-600 dark:text-slate-300 dark:hover:border-red-900 dark:hover:bg-red-950/40 dark:hover:text-red-400"
             >
               Sil
             </button>
@@ -198,6 +244,15 @@ function CardItem({
         onConfirm={() => remove.mutate()}
         onCancel={() => setConfirmDelete(false)}
       />
+      <ConfirmDialog
+        open={confirmRemoveImage}
+        title="Görseli kaldır"
+        message="Bu kartın görseli kaldırılacak. Devam edilsin mi?"
+        confirmLabel="Kaldır"
+        loading={removeImage.isPending}
+        onConfirm={() => removeImage.mutate()}
+        onCancel={() => setConfirmRemoveImage(false)}
+      />
     </div>
   )
 }
@@ -207,8 +262,8 @@ export default function SetDetail() {
   const navigate = useNavigate()
   const queryClient = useQueryClient()
   const { toast } = useToast()
+  const termsQuery = useTerms()
   const [token, setToken] = useState<string | null>(null)
-  const [exportOpen, setExportOpen] = useState(false)
   const [editTitle, setEditTitle] = useState(false)
   const [titleDraft, setTitleDraft] = useState('')
   const [confirmDeleteSet, setConfirmDeleteSet] = useState(false)
@@ -216,6 +271,12 @@ export default function SetDetail() {
   const [newFront, setNewFront] = useState('')
   const [newBack, setNewBack] = useState('')
   const [newTerm, setNewTerm] = useState('')
+
+  // Toplu otomatik görsel
+  const [autoConfirm, setAutoConfirm] = useState(false)
+  const [autoPickerOpen, setAutoPickerOpen] = useState(false)
+  const [autoDocId, setAutoDocId] = useState<string | null>(null)
+  const [autoRange, setAutoRange] = useState('')
 
   useEffect(() => {
     getAccessToken().then(setToken)
@@ -227,6 +288,30 @@ export default function SetDetail() {
     enabled: !!id,
     refetchInterval: (q) => (q.state.data?.status === 'generating' ? 2500 : false),
   })
+
+  const set = setQuery.data
+  const cards = useMemo(() => set?.cards ?? [], [set])
+
+  // Otomatik görsel için doküman seçimi (deste dokümana bağlı değilse)
+  const docsQuery = useQuery({
+    queryKey: ['documents'],
+    queryFn: () => api.get<DocumentsResponse>('/documents'),
+    enabled: autoPickerOpen,
+  })
+  const readyDocs = useMemo(
+    () => (docsQuery.data?.documents ?? []).filter((d) => d.status === 'ready'),
+    [docsQuery.data],
+  )
+  const autoSelectedDoc = useMemo(
+    () => readyDocs.find((d) => d.id === autoDocId) ?? null,
+    [readyDocs, autoDocId],
+  )
+
+  useEffect(() => {
+    if (autoPickerOpen) {
+      setAutoRange(`1-${autoSelectedDoc?.page_count ?? 40}`)
+    }
+  }, [autoPickerOpen, autoSelectedDoc?.page_count])
 
   const updateSet = useMutation({
     mutationFn: (body: { title?: string; description?: string }) =>
@@ -268,35 +353,25 @@ export default function SetDetail() {
     onError: (err: Error) => toast(err.message),
   })
 
-  const set = setQuery.data
-  const cards = set?.cards ?? []
+  const autoImages = useMutation({
+    mutationFn: (body: { range?: string; document_id?: string }) =>
+      api.post<{ status: string; set_id: string }>(`/sets/${id}/auto-images`, body),
+    onSuccess: () => {
+      toast('Otomatik görsel üretimi başladı. Kartlar hazır olunca güncellenecek.', 'success')
+      setAutoConfirm(false)
+      setAutoPickerOpen(false)
+      queryClient.invalidateQueries({ queryKey: ['set', id] })
+    },
+    onError: (err: Error) => toast(err.message),
+  })
 
-  const exportJson = () => {
+  const startAutoImages = () => {
     if (!set) return
-    downloadFile(
-      `${set.title}.json`,
-      JSON.stringify(
-        cards.map((c) => ({ front: c.front, back: c.back, term: c.term, page: c.page })),
-        null,
-        2,
-      ),
-      'application/json',
-    )
-    setExportOpen(false)
-  }
-
-  const exportCsv = () => {
-    if (!set) return
-    const rows = ['front,back,term,page']
-    for (const c of cards) {
-      rows.push(
-        [csvEscape(c.front), csvEscape(c.back), csvEscape(c.term ?? ''), String(c.page ?? '')].join(
-          ',',
-        ),
-      )
+    if (set.document_id) {
+      setAutoConfirm(true)
+    } else {
+      setAutoPickerOpen(true)
     }
-    downloadFile(`${set.title}.csv`, rows.join('\n'), 'text/csv;charset=utf-8')
-    setExportOpen(false)
   }
 
   if (setQuery.isLoading) {
@@ -309,14 +384,23 @@ export default function SetDetail() {
 
   if (setQuery.isError || !set) {
     return (
-      <div className="mx-auto max-w-2xl rounded-xl border border-red-200 bg-red-50 px-5 py-4 text-sm text-red-700">
+      <div className="mx-auto max-w-2xl rounded-xl border border-red-200 bg-red-50 px-5 py-4 text-sm text-red-700 dark:border-red-900 dark:bg-red-950/40 dark:text-red-300">
         Deste yüklenemedi: {(setQuery.error as Error)?.message ?? 'bilinmeyen hata'}
       </div>
     )
   }
 
+  const autoRangeValid = /^\d+(-\d+)?$/.test(autoRange.trim())
+
   return (
     <div className="mx-auto max-w-4xl space-y-6">
+      {/* Terim otomatik tamamlama listesi */}
+      <datalist id={TERMS_LIST_ID}>
+        {(termsQuery.data?.terms ?? []).map((t) => (
+          <option key={t} value={t} />
+        ))}
+      </datalist>
+
       {/* Başlık */}
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div className="min-w-0">
@@ -326,7 +410,7 @@ export default function SetDetail() {
                 type="text"
                 value={titleDraft}
                 onChange={(e) => setTitleDraft(e.target.value)}
-                className="rounded-lg border border-slate-300 px-3 py-1.5 text-lg font-semibold focus:border-indigo-500 focus:outline-none"
+                className="rounded-lg border border-slate-300 px-3 py-1.5 text-lg font-semibold focus:border-indigo-500 focus:outline-none dark:border-slate-600 dark:bg-slate-900 dark:text-slate-100"
               />
               <button
                 onClick={() => titleDraft.trim() && updateSet.mutate({ title: titleDraft.trim() })}
@@ -337,14 +421,14 @@ export default function SetDetail() {
               </button>
               <button
                 onClick={() => setEditTitle(false)}
-                className="rounded-lg border border-slate-300 px-3 py-1.5 text-sm text-slate-600 hover:bg-slate-50"
+                className="rounded-lg border border-slate-300 px-3 py-1.5 text-sm text-slate-600 hover:bg-slate-50 dark:border-slate-600 dark:text-slate-300 dark:hover:bg-slate-700"
               >
                 Vazgeç
               </button>
             </div>
           ) : (
             <h1
-              className="cursor-pointer text-2xl font-semibold tracking-tight text-slate-900 hover:text-indigo-700"
+              className="cursor-pointer text-2xl font-semibold tracking-tight text-slate-900 hover:text-indigo-700 dark:text-slate-100 dark:hover:text-indigo-400"
               onClick={() => {
                 setTitleDraft(set.title)
                 setEditTitle(true)
@@ -354,11 +438,13 @@ export default function SetDetail() {
               {set.title} <span className="text-sm font-normal text-slate-400">✏️</span>
             </h1>
           )}
-          <div className="mt-1.5 flex items-center gap-3 text-sm text-slate-500">
+          <div className="mt-1.5 flex items-center gap-3 text-sm text-slate-500 dark:text-slate-400">
             <StatusBadge status={set.status} />
             <span>{cards.length} kart</span>
           </div>
-          {set.description && <p className="mt-2 text-sm text-slate-500">{set.description}</p>}
+          {set.description && (
+            <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">{set.description}</p>
+          )}
         </div>
 
         <div className="flex flex-wrap gap-2">
@@ -368,39 +454,28 @@ export default function SetDetail() {
           >
             🎓 Çalış
           </Link>
-          <div className="relative">
-            <button
-              onClick={() => setExportOpen((o) => !o)}
-              className="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
-            >
-              Dışa Aktar ▾
-            </button>
-            {exportOpen && (
-              <div className="absolute right-0 z-20 mt-1 w-40 overflow-hidden rounded-lg border border-slate-200 bg-white shadow-lg">
-                <button
-                  onClick={exportJson}
-                  className="block w-full px-4 py-2 text-left text-sm text-slate-700 hover:bg-slate-50"
-                >
-                  JSON olarak indir
-                </button>
-                <button
-                  onClick={exportCsv}
-                  className="block w-full px-4 py-2 text-left text-sm text-slate-700 hover:bg-slate-50"
-                >
-                  CSV olarak indir
-                </button>
-              </div>
-            )}
-          </div>
+          <button
+            onClick={startAutoImages}
+            disabled={autoImages.isPending || set.status === 'generating'}
+            className="inline-flex items-center gap-2 rounded-lg border border-indigo-200 bg-indigo-50 px-4 py-2 text-sm font-medium text-indigo-700 hover:bg-indigo-100 disabled:opacity-50 dark:border-indigo-900 dark:bg-indigo-950/60 dark:text-indigo-300 dark:hover:bg-indigo-900/60"
+          >
+            {autoImages.isPending && <Spinner size={4} />}
+            🖼️ Tüm kartlara otomatik görsel
+          </button>
+          <ExportMenu
+            basePath={`/sets/${set.id}/export`}
+            fallbackBaseName={set.title}
+            formats={SET_EXPORT_FORMATS}
+          />
           <button
             onClick={() => setAddOpen(true)}
-            className="rounded-lg border border-indigo-200 bg-indigo-50 px-4 py-2 text-sm font-medium text-indigo-700 hover:bg-indigo-100"
+            className="rounded-lg border border-indigo-200 bg-indigo-50 px-4 py-2 text-sm font-medium text-indigo-700 hover:bg-indigo-100 dark:border-indigo-900 dark:bg-indigo-950/60 dark:text-indigo-300 dark:hover:bg-indigo-900/60"
           >
             + Kart Ekle
           </button>
           <button
             onClick={() => setConfirmDeleteSet(true)}
-            className="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-600 hover:border-red-200 hover:bg-red-50 hover:text-red-700"
+            className="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-600 hover:border-red-200 hover:bg-red-50 hover:text-red-700 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-300 dark:hover:border-red-900 dark:hover:bg-red-950/40 dark:hover:text-red-400"
           >
             Sil
           </button>
@@ -410,18 +485,18 @@ export default function SetDetail() {
       {/* İçerik */}
       {set.status === 'generating' ? (
         <div className="space-y-4">
-          <div className="flex items-center justify-center gap-3 rounded-2xl border border-indigo-100 bg-indigo-50/60 py-6">
+          <div className="flex items-center justify-center gap-3 rounded-2xl border border-indigo-100 bg-indigo-50/60 py-6 dark:border-indigo-900 dark:bg-indigo-950/40">
             <Spinner size={6} />
-            <p className="text-sm font-medium text-indigo-700">
-              Kartlar üretiliyor... Bu sayfa otomatik güncellenecek.
+            <p className="text-sm font-medium text-indigo-700 dark:text-indigo-300">
+              Kartlar hazırlanıyor... Bu sayfa otomatik güncellenecek.
             </p>
           </div>
           {[1, 2, 3, 4].map((i) => (
-            <div key={i} className="h-28 animate-pulse rounded-2xl bg-slate-200/60" />
+            <div key={i} className="h-28 animate-pulse rounded-2xl bg-slate-200/60 dark:bg-slate-700/40" />
           ))}
         </div>
       ) : set.status === 'failed' ? (
-        <div className="rounded-2xl border border-red-200 bg-red-50 px-5 py-6 text-sm text-red-700">
+        <div className="rounded-2xl border border-red-200 bg-red-50 px-5 py-6 text-sm text-red-700 dark:border-red-900 dark:bg-red-950/40 dark:text-red-300">
           <p className="font-semibold">Üretim başarısız oldu</p>
           <p className="mt-1">{set.error ?? 'Bilinmeyen bir hata oluştu.'}</p>
         </div>
@@ -463,41 +538,42 @@ export default function SetDetail() {
           className="space-y-4"
         >
           <div>
-            <label className="mb-1 block text-sm font-medium text-slate-700">Ön yüz</label>
+            <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">Ön yüz</label>
             <textarea
               required
               value={newFront}
               onChange={(e) => setNewFront(e.target.value)}
               rows={2}
-              className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none"
+              className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none dark:border-slate-600 dark:bg-slate-900 dark:text-slate-100"
             />
           </div>
           <div>
-            <label className="mb-1 block text-sm font-medium text-slate-700">Arka yüz</label>
+            <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">Arka yüz</label>
             <textarea
               required
               value={newBack}
               onChange={(e) => setNewBack(e.target.value)}
               rows={3}
-              className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none"
+              className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none dark:border-slate-600 dark:bg-slate-900 dark:text-slate-100"
             />
           </div>
           <div>
-            <label className="mb-1 block text-sm font-medium text-slate-700">
+            <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">
               Terim (isteğe bağlı)
             </label>
             <input
               type="text"
               value={newTerm}
               onChange={(e) => setNewTerm(e.target.value)}
-              className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none"
+              list={TERMS_LIST_ID}
+              className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none dark:border-slate-600 dark:bg-slate-900 dark:text-slate-100"
             />
           </div>
           <div className="flex justify-end gap-3">
             <button
               type="button"
               onClick={() => setAddOpen(false)}
-              className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
+              className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 dark:border-slate-600 dark:text-slate-200 dark:hover:bg-slate-700"
             >
               Vazgeç
             </button>
@@ -514,6 +590,90 @@ export default function SetDetail() {
           </div>
         </form>
       </Modal>
+
+      {/* Otomatik görsel — doküman seçici (deste dokümana bağlı değilse) */}
+      <Modal
+        open={autoPickerOpen}
+        onClose={() => setAutoPickerOpen(false)}
+        title="Toplu otomatik görsel"
+        widthClass="max-w-md"
+      >
+        <p className="mb-4 text-sm text-slate-600 dark:text-slate-300">
+          Görseli olmayan tüm kartlara, seçilen dokümandan otomatik figür eklenecek.
+        </p>
+        {docsQuery.isLoading ? (
+          <div className="flex justify-center py-6">
+            <Spinner size={6} />
+          </div>
+        ) : readyDocs.length === 0 ? (
+          <p className="text-sm text-slate-500 dark:text-slate-400">
+            Hazır durumda doküman yok. Önce panelden bir PDF yükleyin.
+          </p>
+        ) : (
+          <div className="space-y-4">
+            <div>
+              <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">
+                Doküman
+              </label>
+              <select
+                value={autoDocId ?? ''}
+                onChange={(e) => setAutoDocId(e.target.value || null)}
+                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none dark:border-slate-600 dark:bg-slate-900 dark:text-slate-100"
+              >
+                <option value="">— Doküman seçin —</option>
+                {readyDocs.map((d) => (
+                  <option key={d.id} value={d.id}>
+                    {d.filename} ({d.page_count ?? '?'} sayfa)
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">
+                Sayfa aralığı
+              </label>
+              <input
+                type="text"
+                value={autoRange}
+                onChange={(e) => setAutoRange(e.target.value)}
+                placeholder="örn. 1-40"
+                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none dark:border-slate-600 dark:bg-slate-900 dark:text-slate-100"
+              />
+            </div>
+            <div className="flex justify-end gap-3">
+              <button
+                onClick={() => setAutoPickerOpen(false)}
+                className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 dark:border-slate-600 dark:text-slate-200 dark:hover:bg-slate-700"
+              >
+                Vazgeç
+              </button>
+              <button
+                onClick={() =>
+                  autoDocId &&
+                  autoImages.mutate({ document_id: autoDocId, range: autoRange.trim() })
+                }
+                disabled={!autoDocId || !autoRangeValid || autoImages.isPending}
+                className="inline-flex items-center gap-2 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 disabled:opacity-50"
+              >
+                {autoImages.isPending && (
+                  <Spinner size={4} className="border-indigo-300 border-t-white" />
+                )}
+                Başlat
+              </button>
+            </div>
+          </div>
+        )}
+      </Modal>
+
+      <ConfirmDialog
+        open={autoConfirm}
+        title="Toplu otomatik görsel"
+        message="Görseli olmayan tüm kartlara otomatik figür eklenecek, bu bir dakika sürebilir."
+        confirmLabel="Başlat"
+        loading={autoImages.isPending}
+        onConfirm={() => autoImages.mutate({})}
+        onCancel={() => setAutoConfirm(false)}
+      />
 
       <ConfirmDialog
         open={confirmDeleteSet}

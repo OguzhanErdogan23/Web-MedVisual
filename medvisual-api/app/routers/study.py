@@ -101,7 +101,43 @@ def submit_review(req: ReviewReq, user: AuthUser = Depends(get_current_user)):
         "updated_at": now.isoformat(),
     }
     db.table("card_reviews").upsert(row, on_conflict="card_id").execute()
+    # Gecmis/istatistik icin her cevabi olay olarak da kaydet (best-effort)
+    try:
+        db.table("review_events").insert(
+            {"user_id": user.id, "card_id": req.card_id,
+             "grade": req.grade, "reviewed_at": now.isoformat()}
+        ).execute()
+    except Exception:
+        pass  # review_events tablosu yoksa stats yine card_reviews'tan calisir
     return row
+
+
+@router.get("/history")
+def study_history(days: int = 14, user: AuthUser = Depends(get_current_user)):
+    """Son N gunun gunluk calisma ozeti (ilerleme grafikleri icin)."""
+    from collections import defaultdict
+
+    rows = (
+        get_db()
+        .table("review_events")
+        .select("grade, reviewed_at")
+        .eq("user_id", user.id)
+        .order("reviewed_at", desc=True)
+        .limit(2000)
+        .execute()
+        .data
+    )
+    by_day = defaultdict(lambda: {"total": 0, "correct": 0})
+    for r in rows:
+        day = r["reviewed_at"][:10]
+        by_day[day]["total"] += 1
+        if r["grade"] >= 2:  # Iyi/Kolay = dogru
+            by_day[day]["correct"] += 1
+    series = [
+        {"date": d, "total": v["total"], "correct": v["correct"]}
+        for d, v in sorted(by_day.items())
+    ][-days:]
+    return {"days": series, "total_reviews": len(rows)}
 
 
 @router.get("/stats")

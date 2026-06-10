@@ -69,3 +69,12 @@ class ReviewReq(BaseModel):
 
 class ImportReq(BaseModel):
     set_title: Optional[str] = None
+
+
+class AutoImagesReq(BaseModel):
+    range: Optional[str] = None
+    document_id: Optional[str] = None
+
+
+class QuizUpdateReq(BaseModel):
+    title: str

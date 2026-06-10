@@ -8,7 +8,8 @@ plugins {
 android {
     namespace = "com.medvisual.medvisual_mobile"
     compileSdk = flutter.compileSdkVersion
-    ndkVersion = flutter.ndkVersion
+    // Makinedeki saglam NDK'ya sabitlendi (flutter.ndkVersion = 26.3 kurulumu bozuktu)
+    ndkVersion = "27.0.12077973"
 
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
