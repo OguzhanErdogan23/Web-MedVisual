@@ -1,0 +1,802 @@
+# MedVisual - Latince / Anatomik Tip Terimleri Tohum Sozlugu
+# Otomatik terim tespiti icin kullanilir. Genisletilebilir.
+# Kemik / iskelet
+femur
+tibia
+fibula
+humerus
+radius
+ulna
+patella
+sternum
+clavicula
+scapula
+costa
+vertebra
+mandibula
+maxilla
+cranium
+pelvis
+sacrum
+calcaneus
+metacarpus
+metatarsus
+phalanx
+
+# Kas / yumusak doku
+musculus
+biceps
+triceps
+deltoideus
+tendon
+ligamentum
+fascia
+
+# Damar / sinir
+arteria
+vena
+aorta
+capillaris
+nervus
+ganglion
+plexus
+
+# Organ / sistem
+cor
+pulmo
+hepar
+ren
+gaster
+intestinum
+encephalon
+cerebrum
+cerebellum
+medulla
+cortex
+neuron
+
+# Histoloji / doku
+epithelium
+endothelium
+mucosa
+stroma
+parenchyma
+mitochondria
+nucleus
+membrana
+collagen
+elastin
+
+# Genel anatomik yon/terim
+anterior
+posterior
+medial
+lateralis
+proximal
+distalis
+superior
+inferior
+
+# Kemik yapi detaylari
+acromion
+condylus
+epicondylus
+trochanter
+tuberculum
+tuberositas
+foramen
+fossa
+sulcus
+crista
+spina
+processus
+caput
+collum
+corpus
+diaphysis
+epiphysis
+periosteum
+
+# Eklem / baglanti
+articulatio
+synovia
+cartilago
+meniscus
+bursa
+capsula
+
+# Kas detaylari
+fascicle
+sarcomere
+myofibril
+aponeurosis
+origo
+insertio
+
+# Damar / dolasim
+arteriola
+venula
+sinus
+valva
+ventriculus
+atrium
+
+# Sinir sistemi
+axon
+dendrite
+synapsis
+myelin
+gyrus
+sulcus cerebri
+thalamus
+hypothalamus
+pons
+medulla oblongata
+meninges
+dura mater
+
+# Histoloji ek
+osteon
+osteocyte
+osteoblast
+chondrocyte
+fibroblast
+adipocyte
+lymphocyte
+erythrocyte
+leukocyte
+
+# Sindirim / ic organ
+duodenum
+jejunum
+ileum
+colon
+pancreas
+lien
+vesica
+
+# Patoloji / hastalık terimleri
+necrosis
+apoptosis
+inflammation
+fibrosis
+edema
+ischemia
+infarction
+thrombosis
+embolism
+hemorrhage
+hyperplasia
+hypertrophy
+atrophy
+metaplasia
+dysplasia
+neoplasm
+carcinoma
+sarcoma
+adenoma
+lymphoma
+leukemia
+melanoma
+glioma
+hepatoma
+
+# Fizyoloji / fonksiyon
+homeostasis
+metabolism
+catabolism
+anabolism
+osmosis
+diffusion
+filtration
+secretion
+absorption
+reabsorption
+depolarization
+repolarization
+action potential
+receptor
+ligand
+enzyme
+substrate
+catalyst
+inhibition
+activation
+feedback
+regulation
+
+# Farmakoloji
+pharmacokinetics
+pharmacodynamics
+bioavailability
+half-life
+clearance
+distribution
+elimination
+agonist
+antagonist
+efficacy
+potency
+toxicity
+dosage
+concentration
+plasma
+serum
+
+# Biyokimya
+glucose
+glycogen
+glycolysis
+gluconeogenesis
+insulin
+glucagon
+lipid
+cholesterol
+triglyceride
+phospholipid
+fatty acid
+amino acid
+protein
+peptide
+polypeptide
+coenzyme
+cofactor
+nucleotide
+DNA
+RNA
+transcription
+translation
+mutation
+
+# Histoloji ek
+endocrine
+exocrine
+sebaceous
+mucous
+serous
+goblet cell
+mast cell
+macrophage
+neutrophil
+eosinophil
+basophil
+plasma cell
+connective tissue
+
+# Kardiyovaskuler ek
+myocardium
+pericardium
+endocardium
+sinoatrial
+atrioventricular
+diastole
+systole
+cardiac output
+stroke volume
+heart rate
+blood pressure
+hypertension
+hypotension
+arrhythmia
+tachycardia
+bradycardia
+
+# Solunum sistemi
+alveolus
+bronchus
+bronchiole
+trachea
+larynx
+pharynx
+diaphragm
+pleura
+surfactant
+compliance
+resistance
+tidal volume
+vital capacity
+
+# Bosaltim / bobrek
+nephron
+glomerulus
+tubulus
+collecting duct
+renal cortex
+renal medulla
+ureter
+urethra
+creatinine
+urea
+electrolyte
+sodium
+potassium
+chloride
+bicarbonate
+
+# Endokrin sistem
+hormone
+pituitary
+parathyroid
+adrenal
+cortisol
+aldosterone
+epinephrine
+norepinephrine
+testosterone
+estrogen
+progesterone
+prolactin
+oxytocin
+vasopressin
+
+# Ureme / gelisim
+fertilization
+implantation
+embryo
+fetus
+placenta
+umbilical cord
+amnion
+chorion
+gonad
+gamete
+sperm
+ovum
+meiosis
+mitosis
+chromosome
+
+# Moore's Clinically Oriented Anatomy - Otomatik Tarama
+# (cok kelimeli)
+fascia lata
+vena cava
+
+# (tek kelimeli)
+acetabulum
+adenoiditis
+anastomosis
+angiography
+ankylosis
+anserinus
+apparatus
+appendicitis
+appendix
+arteriosclerosis
+arteriovenous
+arthritis
+arthroscopy
+articularis
+atherosclerosis
+brachioradialis
+brevis
+bronchoscopy
+bursae
+bursitis
+capitulum
+capsulitis
+cardiology
+carpus
+cirrhosis
+colonoscopy
+craniosynostosis
+culdocentesis
+cutaneous
+cyanosis
+dermatology
+digitorum
+digitus
+diverticulosis
+diverticulum
+dorsalis
+dorsum
+dysfunction
+electromyography
+embryology
+endoneurium
+endoscopy
+epicondylitis
+epineurium
+equinovarus
+esophagus
+externus
+fasciae
+fasciitis
+fasciotomy
+fibularis
+fistulae
+frenulum
+gastrocnemius
+gastroenterology
+gemellus
+genioglossus
+gingivae
+gingivitis
+gluteus
+gracilis
+gynecology
+hallucis
+hematoma
+hiatus
+hydrocephalus
+iliacus
+infraspinatus
+infraspinous
+integumentum
+intermedius
+internus
+interosseous
+interosseus
+ischium
+labium
+labrum
+lacunae
+latissimus
+leptomeningitis
+longus
+lymphadenitis
+lymphadenopathy
+lymphangitis
+magnus
+malleolus
+mastoiditis
+maxillae
+maximus
+medialis
+mediastinum
+medius
+mesoduodenum
+metaphysis
+metastasis
+microscopy
+minimus
+musculocutaneous
+nephroptosis
+nervorum
+neuralgia
+neuritis
+neurology
+occipitofrontalis
+omentum
+ophthalmology
+orbicularis
+osteoarthritis
+osteoporosis
+otitis
+pancreatitis
+paracentesis
+paralysis
+paraphimosis
+patellae
+pathology
+pectineus
+pectoralis
+pericardiocentesis
+pericarditis
+perichondrium
+perineum
+perineurium
+peritoneum
+peritonitis
+phimosis
+physiology
+piriformis
+plantae
+plantaris
+planus
+pleurae
+pleuritis
+popliteus
+pulpitis
+pulposus
+quadratus
+radiography
+radiology
+rectum
+rectus
+retinaculum
+retinculae
+rhinitis
+rhizotomy
+rostrum
+sacrospinous
+sacrotuberous
+saphenous
+sartorius
+scrotum
+sellae
+semimembranosus
+semitendinosus
+septicemia
+septum
+serratus
+sialography
+sinusitis
+soleus
+squamous
+stapedius
+stenosis
+striae
+striation
+subclavian
+subcutaneous
+supraspinatus
+supraspinous
+sustentaculum
+syndesmosis
+synostosis
+tarsus
+tendinitis
+tendinous
+tenosynovitis
+tertius
+testis
+thoracentesis
+thorax
+thrombophlebitis
+thrombus
+thymus
+tibialis
+tomography
+torticollis
+trabeculae
+transversalis
+trapezium
+trapezius
+trigonum
+ultrasonography
+umbilicus
+urethrae
+uterus
+vaginismus
+valgum
+valgus
+vastus
+vertebrae
+volvulus
+zygomaticus
+
+# Anatomic Basis of Neurologic Diagnosis - Otomatik Tarama
+# (cok kelimeli)
+cisterna magna
+corpus callosum
+corpus striatum
+lamina terminalis
+septum pellucidum
+spina bifida
+spina bifida occulta
+
+# (tek kelimeli)
+angioma
+epithalamus
+hamartoma
+hamartomatous
+hemangioblastoma
+hemiparesis
+hypertrichosis
+hypogenesis
+laminae
+medullaris
+neuroembryology
+neurofibromatosis
+nystagmus
+pallidus
+prognosis
+sclerosis
+sebaceum
+sequelae
+splenium
+
+# Prometheus Atlas - Manuel Latince Terimler
+# (anatomik yapilar - cok kelimeli)
+anulus fibrosus
+arteria brachialis
+arteria femoralis
+arteria fibularis
+arteria iliaca communis
+arteria iliaca externa
+arteria iliaca interna
+arteria poplitea
+arteria radialis
+arteria tibialis anterior
+arteria tibialis posterior
+arteria ulnaris
+articulatio coxae
+articulatio cubiti
+articulatio genus
+articulatio humeri
+articulatio radiocarpalis
+articulatio talocruralis
+canalis carpi
+canalis inguinalis
+capitulum humeri
+caput radii
+condylus lateralis
+condylus medialis
+discus intervertebralis
+epicondylus lateralis
+epicondylus medialis
+fascia thoracolumbalis
+fossa coronoidea
+fossa iliaca
+fossa intercondylaris
+fossa olecrani
+fossa trochanterica
+incisura trochlearis
+ligamentum collaterale
+ligamentum cruciatum anterius
+ligamentum cruciatum posterius
+ligamentum patellae
+linea alba
+linea arcuata
+linea intertrochanterica
+malleolus lateralis
+malleolus medialis
+musculus biceps brachii
+musculus biceps femoris
+musculus brachialis
+musculus brachioradialis
+musculus deltoideus
+musculus extensor carpi radialis
+musculus extensor digitorum
+musculus fibularis brevis
+musculus fibularis longus
+musculus flexor carpi radialis
+musculus flexor carpi ulnaris
+musculus gastrocnemius
+musculus gluteus maximus
+musculus gluteus medius
+musculus gluteus minimus
+musculus gracilis
+musculus iliopsoas
+musculus infraspinatus
+musculus latissimus dorsi
+musculus pectoralis major
+musculus pectoralis minor
+musculus pronator teres
+musculus rectus femoris
+musculus rhomboideus
+musculus sartorius
+musculus semimembranosus
+musculus semitendinosus
+musculus serratus anterior
+musculus soleus
+musculus subscapularis
+musculus supraspinatus
+musculus teres major
+musculus teres minor
+musculus tibialis anterior
+musculus tibialis posterior
+musculus trapezius
+musculus triceps brachii
+musculus vastus lateralis
+musculus vastus medialis
+nervus axillaris
+nervus cutaneus
+nervus femoralis
+nervus fibularis communis
+nervus fibularis profundus
+nervus fibularis superficialis
+nervus ischiadicus
+nervus medianus
+nervus musculocutaneus
+nervus obturatorius
+nervus radialis
+nervus saphenus
+nervus tibialis
+nervus ulnaris
+nucleus pulposus
+plexus brachialis
+plexus lumbalis
+plexus sacralis
+processus coracoideus
+processus styloideus
+retinaculum extensorum
+retinaculum flexorum
+spina iliaca anterior superior
+spina iliaca posterior superior
+symphysis pubica
+tractus iliotibialis
+trochanter major
+trochanter minor
+tuber ischiadicum
+tuberculum majus
+tuberculum minus
+tuberositas radii
+vena femoralis
+vena saphena magna
+vena saphena parva
+# (tek kelimeli)
+capitatum
+claviculae
+cuboideum
+cuneiforme
+hamatum
+ilium
+lunatum
+metatarsale
+naviculare
+olecranon
+pisiforme
+pubis
+scaphoideum
+styloideus
+talus
+trapezoideum
+triquetrum
+trochlea
+
+# Moore Anatomy - Ek Cok Kelimeli Terimler
+arteria carotis communis
+arteria carotis externa
+arteria carotis interna
+arteria coronaria
+arteria subclavia
+arteria vertebralis
+canalis femoralis
+cisterna chyli
+ductus thoracicus
+foramen ischiadicum majus
+foramen obturatum
+fossa inguinalis
+fossa poplitea
+ligamentum inguinale
+linea semilunaris
+mesenteria
+nervus accessorius
+nervus hypoglossus
+nervus intercostalis
+nervus phrenicus
+nervus vagus
+omentum majus
+omentum minus
+peritoneum parietale
+peritoneum viscerale
+plexus cervicalis
+sinus coronarius
+trigonum femorale
+vena jugularis externa
+vena jugularis interna
+vena subclavia
+
+# Noroloji - Ek Terimler
+aquaeductus cerebri
+arachnoidea mater
+capsula externa
+capsula interna
+chiasma opticum
+cisterna cerebellomedullaris
+commissura anterior
+commissura posterior
+corona radiata
+fissura longitudinalis
+formatio reticularis
+globus pallidus
+gyrus postcentralis
+gyrus precentralis
+locus caeruleus
+nervus abducens
+nervus facialis
+nervus glossopharyngeus
+nervus oculomotorius
+nervus opticus
+nervus trigeminus
+nervus trochlearis
+nervus vestibulocochlearis
+nucleus caudatus
+nucleus lentiformis
+pedunculus cerebri
+pia mater
+plexus choroideus
+spatium subarachnoideum
+substantia nigra
+sulcus centralis
+sulcus lateralis
+tractus corticospinalis
+tractus opticus
+tractus spinothalamicus
+ventriculus lateralis
+ventriculus quartus
+ventriculus tertius
+vermis cerebelli
+putamen
+

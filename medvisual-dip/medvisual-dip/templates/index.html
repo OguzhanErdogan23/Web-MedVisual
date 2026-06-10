@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MedVisual · Görüntü İşleme Modülü</title>
+  <!-- Fontlar render'i bloke etmeden (asenkron) yuklenir; internet yoksa
+       sistem fontuna (system-ui) duser. Modul cevrimdisi de calisir. -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap"
+        rel="stylesheet" media="print" onload="this.media='all'" />
+  <link rel="stylesheet" href="/static/style.css" />
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <span class="mark" aria-hidden="true"></span>
+      <div class="brand-text">
+        <strong>MedVisual</strong>
+        <span class="sub">Sayısal Görüntü İşleme Modülü</span>
+      </div>
+    </div>
+    <button id="libOpenBtn" class="lib-open-btn" title="Kart kutuphanem">📚 Kütüphane</button>
+    <button id="tourBtn" class="tour-btn" title="Nasıl Kullanılır?">❓ Nasıl Kullanılır?</button>
+    <div class="pipeline-tags">
+      <span>Otsu</span><span>Morfoloji</span><span>OCR</span><span>Fuzzy</span><span>Contour</span><span>CLAHE</span>
+    </div>
+  </header>
+
+  <main class="layout">
+    <!-- SOL PANEL: KONTROL -->
+    <aside class="panel control">
+      <!-- VARSAYILAN KITAPLAR -->
+      <section class="card" id="defaultBooksCard">
+        <h2>📖 Varsayılan Kitaplar</h2>
+        <p class="note" style="margin-top:0;margin-bottom:8px;">Hazır kitaplardan birini seç, PDF yüklemeye gerek yok.</p>
+        <div id="defaultBooksList" class="default-books-list">
+          <div class="db-loading">Kitaplar yükleniyor…</div>
+        </div>
+      </section>
+
+      <!-- 0. KARTLARLA CALIS (PDF olmadan) -->
+      <section class="card" id="quickStudyCard">
+        <h2>📚 Kartlarla Çalış</h2>
+        <p class="note" style="margin-top:0;margin-bottom:10px;">Kütüphanenizdeki veya hazır kart dosyasıyla PDF yüklemeden çalışın.</p>
+        <label class="drop-small" for="studyFileInput">
+          <input type="file" id="studyFileInput" accept=".csv,.json,.tsv,.txt,.apkg,.pdf" hidden>
+          <span>📂 Kart veya PDF yükle (CSV / JSON / TXT / APKG / PDF)</span>
+        </label>
+        <div id="studyFileInfo" style="margin-top:6px;"></div>
+      </section>
+
+      <!-- 1. YUKLEME -->
+      <section class="card">
+        <h2>1 · Doküman Yükle</h2>
+        <label class="drop" id="drop">
+          <input type="file" id="fileInput" accept="application/pdf" hidden />
+          <div class="drop-inner">
+            <span class="drop-icon" aria-hidden="true">＋</span>
+            <span class="drop-main">PDF seç veya buraya bırak</span>
+            <span class="drop-hint">Tıbbi ders kitabı / atlas (taranmış da olabilir)</span>
+          </div>
+        </label>
+        <div id="docInfo" class="doc-info hidden">
+          <div class="doc-row"><span class="k">Dosya</span><span class="v" id="docName">—</span></div>
+          <div class="doc-row"><span class="k">Sayfa</span><span class="v" id="docPages">—</span></div>
+          <div class="doc-row"><span class="k">Metin katmanı</span><span class="v" id="docText">—</span></div>
+        </div>
+      </section>
+
+      <!-- 2. GOREV SECIMI -->
+      <section class="card" id="modeCard" aria-disabled="true">
+        <h2>2 · Ne yapmak istersin?</h2>
+        <div class="modes" id="modes">
+          <button type="button" class="mode" data-mode="cards">
+            <span class="m-ico">🃏</span>
+            <span class="m-txt"><b>Bilgi kartı oluştur</b><i>Sayfalardan terim–tanım kartları</i></span>
+          </button>
+          <button type="button" class="mode" data-mode="image-cards">
+            <span class="m-ico">🖼️</span>
+            <span class="m-txt"><b>Görselli bilgi kartı</b><i>Kart + en uygun figürü öner</i></span>
+          </button>
+          <button type="button" class="mode" data-mode="quiz">
+            <span class="m-ico">❓</span>
+            <span class="m-txt"><b>Test / Quiz oluştur</b><i>Çoktan seçmeli sorular</i></span>
+          </button>
+          <button type="button" class="mode" data-mode="add-image">
+            <span class="m-ico">➕</span>
+            <span class="m-txt"><b>Mevcut karta görsel ekle</b><i>Kart dosyanı yükle, görsel bul</i></span>
+          </button>
+          <button type="button" class="mode" data-mode="segment">
+            <span class="m-ico">🔬</span>
+            <span class="m-txt"><b>Sayfa bölütleme incele</b><i>Otsu + morfoloji görselleştirme</i></span>
+          </button>
+        </div>
+      </section>
+
+      <!-- 3. PARAMETRELER -->
+      <section class="card" id="paramCard" aria-disabled="true">
+        <h2>3 · Ayarlar</h2>
+
+        <!-- Sayfa araligi (cards/image-cards/quiz/add-image) -->
+        <div class="field" data-show="cards image-cards quiz add-image">
+          <label for="rangeInput">Sayfa aralığı</label>
+          <input type="text" id="rangeInput" placeholder="ör. 25-50  ·  veya 30  ·  veya 10,12,40-42" autocomplete="off" />
+          <p class="note" id="rangeNote">Tüm dökümanı değil, yalnızca bu sayfalar işlenir.</p>
+          <div id="rangeWarning" class="range-warning hidden" data-show="cards image-cards quiz">
+            <span class="warn-ico">⚠</span>
+            <span>En iyi sonuç için kitabın <strong>orta bölümlerinden 10–20 sayfalık aralıklar</strong> seçin (ör. kitap 138 sayfaysa 50–70 aralığı). Çok kısa aralıklar yeterli terim içermeyebilir.</span>
+          </div>
+        </div>
+
+        <!-- Tek sayfa (segment) -->
+        <div class="field hidden" data-show="segment">
+          <label for="pageInput">Sayfa</label>
+          <div class="page-nav">
+            <button type="button" id="prevPage" class="ico">‹</button>
+            <input type="number" id="pageInput" min="1" value="1" />
+            <button type="button" id="nextPage" class="ico">›</button>
+            <span class="of" id="pageOf">/ —</span>
+          </div>
+        </div>
+
+        <!-- Hedef terim (segment) -->
+        <div class="field hidden" data-show="segment">
+          <label for="termInput">Hedef Latince terim <span class="opt">(opsiyonel)</span></label>
+          <input type="text" id="termInput" list="termList" placeholder="ör. femur, arteria, musculus" autocomplete="off" />
+          <datalist id="termList"></datalist>
+          <p class="note">Boş bırakırsan sayfadaki tüm sözlük terimleri tespit edilir.</p>
+        </div>
+
+        <!-- Sayfa araligi tarama (segment) -->
+        <div class="field hidden" data-show="segment">
+          <label for="segRangeInput">Sayfa aralığı tara <span class="opt">(opsiyonel — terim gerekir)</span></label>
+          <input type="text" id="segRangeInput" placeholder="ör. 10-30 · boş bırakırsan tek sayfa görünür" autocomplete="off" />
+          <p class="note">Aralık + terim verilirse her sayfa sırayla taranır, terimin bulunduğu sayfalar gösterilir.</p>
+        </div>
+
+        <!-- Kart/soru sayisi -->
+        <div class="field hidden" data-show="cards image-cards">
+          <label for="maxCards">Azami kart sayısı</label>
+          <input type="number" id="maxCards" min="1" max="100" value="30" />
+        </div>
+        <div class="field hidden" data-show="quiz">
+          <label for="nQuiz">Soru sayısı</label>
+          <input type="number" id="nQuiz" min="1" max="40" value="10" />
+        </div>
+
+        <!-- Mevcut kart dosyasi (add-image) -->
+        <div class="field hidden" data-show="add-image">
+          <label for="cardsFile">Kart dosyası (CSV / JSON / TSV / TXT / APKG)</label>
+          <input type="file" id="cardsFile" accept=".csv,.json,.tsv,.txt,.apkg" />
+          <p class="note" id="importInfo">Anki/Quizlet dışa aktarımı veya “ön,arka” sütunlu dosya.</p>
+        </div>
+
+        <!-- Metin kaynagi -->
+        <div class="field">
+          <label for="sourceSel">Metin kaynağı</label>
+          <select id="sourceSel">
+            <option value="auto">Otomatik — metin katmanı varsa onu kullan (hızlı)</option>
+            <option value="ocr">Görsel olarak işle (OCR) — taranmış sayfalar</option>
+          </select>
+          <p class="note">Kelime seçilebilen PDF’lerde metin doğrudan okunur; taranmışsa OCR’a düşülür.</p>
+        </div>
+
+        <!-- AI zenginlestirme toggle -->
+        <div class="field" id="enhance-group" data-show="cards image-cards quiz" style="margin-top:10px;">
+          <label>
+            <input type="checkbox" id="enhance-toggle">
+            <strong>Gemini ile Zenginleştir</strong>
+            <small style="color:#666;">(Google Gemini — GOOGLE_API_KEY gerekir)</small>
+          </label>
+          <div id="llm-status" style="font-size:0.85em;color:#888;margin-top:4px;"></div>
+        </div>
+
+        <button type="button" id="runBtn" class="primary" disabled>Çalıştır</button>
+      </section>
+
+      <!-- Lejant (segment modunda) -->
+      <section class="card legend hidden" id="legendCard">
+        <h2>Bölütleme Renkleri</h2>
+        <div class="leg-row"><span class="swatch text"></span> Metin bloğu</div>
+        <div class="leg-row"><span class="swatch fig"></span> Görsel / figür bloğu</div>
+      </section>
+    </aside>
+
+    <!-- SAG PANEL: SONUC -->
+    <section class="panel result">
+      <div id="placeholder" class="placeholder">
+        <div class="ph-grid" aria-hidden="true"></div>
+        <p>Bir PDF yükle, ne yapmak istediğini seç ve sayfa aralığını gir.<br>
+           Sonuçlar (kartlar, quiz, bölütleme, görsel adayları) burada görünecek.</p>
+      </div>
+      <div id="output" class="output hidden"></div>
+    </section>
+  </main>
+
+  <div id="toast" class="toast hidden"></div>
+  <div id="busy" class="busy hidden"><div class="spinner"></div><span id="busyText">İşleniyor…</span></div>
+
+  <!-- CALISMA ORTAMI OVERLAY -->
+  <div id="studyOverlay" class="study-overlay hidden">
+    <div class="study-bar">
+      <button id="studyClose" class="ghost small">✕ Kapat</button>
+      <span id="studyProgress" class="study-progress">0 / 0</span>
+      <span id="studyScore" class="study-score"></span>
+    </div>
+    <div class="study-stage">
+      <div id="studyCard" class="study-flip-card">
+        <div class="study-flip-inner" id="studyCardInner">
+          <div class="study-face study-front">
+            <div class="study-label">SORU</div>
+            <div class="study-text" id="studyFront"></div>
+            <div class="study-hint">Cevabı görmek için karta tıkla</div>
+          </div>
+          <div class="study-face study-back">
+            <div class="study-label">CEVAP</div>
+            <div class="study-text" id="studyBack"></div>
+          </div>
+        </div>
+      </div>
+      <div id="studyActions" class="study-actions hidden">
+        <button id="studyWrong" class="study-btn wrong">✗ Bilmedim</button>
+        <button id="studyCorrect" class="study-btn correct">✓ Bildim</button>
+      </div>
+    </div>
+    <div class="study-nav">
+      <button id="studyPrev" class="ghost">‹ Önceki</button>
+      <button id="studyNext" class="ghost primary-outline">Sonraki ›</button>
+    </div>
+  </div>
+
+  <div id="printArea"></div>
+
+  <!-- KUTUPHANE OVERLAY -->
+  <div id="libOverlay" class="lib-overlay hidden">
+    <div class="lib-panel">
+      <div class="lib-header">
+        <h2>📚 Kart Kütüphanesi</h2>
+        <button id="libClose" class="ghost small">✕ Kapat</button>
+      </div>
+      <p class="note" style="margin:0 0 12px;">Set adını tıklayarak düzenleyebilirsiniz.</p>
+      <div id="libSets"></div>
+      <div id="libEmpty" class="lib-empty hidden">Henüz kayıtlı kart seti yok.<br><small>Kart ürettikten sonra "💾 Kütüphaneye Ekle" butonunu kullan.</small></div>
+    </div>
+  </div>
+
+  <!-- NASIL KULLANILIR TURU -->
+  <div id="tourOverlay" class="tour-overlay hidden">
+    <div class="tour-box">
+      <div class="tour-header">
+        <span class="tour-step-indicator" id="tourStepNum">Adım 1 / 6</span>
+        <button id="tourClose" class="ghost small">✕ Kapat</button>
+      </div>
+      <div class="tour-content" id="tourContent"></div>
+      <div class="tour-nav">
+        <button id="tourPrev" class="ghost">‹ Önceki</button>
+        <button id="tourNext" class="primary">Sonraki ›</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>

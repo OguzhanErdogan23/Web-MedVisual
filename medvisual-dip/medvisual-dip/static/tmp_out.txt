@@ -1,0 +1,96 @@
+loadDefaultBooks() {
+    fetch("/api/books")
+      .then(r => r.json())
+      .then(data => {
+        const list = $("defaultBooksList");
+        if (!list) return;
+        list.innerHTML = "";
+        if (!data.books || !data.books.length) {
+          list.innerHTML = '<div class="db-empty">Varsayılan kitap bulunamadı.<br><small>books/ klasörüne PDF eklenebilir.</small></div>';
+          return;
+        }
+        data.books.forEach(book => {
+          const btn = document.createElement("button");
+          btn.className = "db-book-btn";
+          btn.innerHTML = `<span class="db-ico">📘</span><span class="db-name">${escapeHtml(book.display)}</span><span class="db-meta">${book.pages ? book.pages + " sayfa" : ""} · ${book.size_mb} MB</span>`;
+          btn.addEventListener("click", () => selectDefaultBook(book.name, book.display));
+          list.appendChild(btn);
+        });
+      })
+      .catch(() => {
+        const list = $("defaultBooksList");
+        if (list) list.innerHTML = '<div class="db-empty">Kitap listesi alınamadı.</div>';
+      });
+  }
+
+  async function selectDefaultBook(name, display) {
+    setBusy(true, `"${display}" yükleniyor…`);
+    try {
+      const r = await fetch("/api/books/load", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name }),
+      });
+      if (!r.ok) {
+        const d = await r.json().catch(() => ({}));
+        throw new Error(d.error || "Kitap yüklenemedi.");
+      }
+      const data = await r.json();
+      state.docId = data.doc_id;
+      state.pageCount = data.page_count;
+      state.hasText = !!data.has_text;
+      state.page = 1;
+
+      const mid = Math.floor(data.page_count / 2);
+      const suggestStart = Math.max(1, mid - 10);
+      const suggestEnd = Math.min(data.page_count, mid + 10);
+
+      $("docName").textContent = data.filename;
+      $("docPages").textContent = data.page_count + " sayfa";
+      $("docText").innerHTML = data.has_text
+        ? '<span class="ok">var (hızlı)</span>'
+        : '<span class="no">yok — OCR</span>';
+      $("docInfo").classList.remove("hidden");
+      $("modeCard").setAttribute("aria-disabled", "false");
+
+      $("pageInput").value = 1;
+      $("pageInput").max = data.page_count;
+      $("pageOf").textContent = "/ " + data.page_count;
+      $("sourceSel").value = data.has_text ? "auto" : "ocr";
+      $("rangeInput").value = `${suggestStart}-${suggestEnd}`;
+
+      showToast(`"${display}" yüklendi (${data.page_count} sayfa). Önerilen aralık: ${suggestStart}-${suggestEnd}`);
+
+      document.querySelectorAll(".db-book-btn").forEach(b => b.classList.remove("sel"));
+      const allBtns = document.querySelectorAll(".db-book-btn");
+      allBtns.forEach(b => { if (b.querySelector(".db-name").textContent === display) b.classList.add("sel"); });
+    } catch (err) {
+      showToast(err.message);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  loadDefaultBooks();
+
+  // ===================== NASIL KULLANILIR TURU ===================== //
+  const TOUR_STEPS = [
+    {
+      title: "MedVisual'e Hoş Geldiniz!",
+      content: `<p>Bu uygulama, tıbbi PDF kaynaklarından otomatik olarak bilgi kartları, görselli kartlar ve çoktan seçmeli testler üretir.</p>
+      <ul>
+        <li>📖 <b>Bilgi Kartı</b> — Latince terim ve tanım çiftleri</li>
+        <li>🖼️ <b>Görselli Kart</b> — Karta uygun anatomik şema</li>
+        <li>❓ <b>Test / Quiz</b> — Çoktan seçmeli sorular</li>
+        <li>🔬 <b>Sayfa Bölütleme</b> — DIP hattını görsel olarak incele</li>
+      </ul>
+      <div class="tour-tip">💡 Varsayılan kitaplar panelinden hızlıca başlayabilirsiniz!</div>`
+    },
+    {
+      title: "Adım 1: Kitap veya PDF Seç",
+      content: `<p>İki yoldan birini seçin:</p>
+      <ul>
+        <li><b>📖 Varsayılan Kitaplar</b> panelinden hazır kitaplardan birini seçin (PDF yüklemeye gerek yok)</li>
+        <li><b>Kendi PDF'inizi</b> sürükle-bırak veya dosya seçici ile yükleyin</li>
+      </ul>
+      <p>PDF yüklendikten sonra say
