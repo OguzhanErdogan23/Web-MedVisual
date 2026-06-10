@@ -7,6 +7,8 @@ import 'package:supabase_flutter/supabase_flutter.dart' hide AuthState;
 
 import '../features/auth/presentation/login_screen.dart';
 import '../features/auth/presentation/register_screen.dart';
+import '../features/onboarding/presentation/onboarding_screen.dart';
+import '../features/settings/presentation/settings_screen.dart';
 import '../features/documents/data/documents_repository.dart';
 import '../features/documents/domain/document.dart';
 import '../features/documents/presentation/documents_bloc.dart';
@@ -42,15 +44,17 @@ class _AuthRefreshNotifier extends ChangeNotifier {
   }
 }
 
-GoRouter createRouter() {
+GoRouter createRouter({bool tourDone = true}) {
   return GoRouter(
     navigatorKey: _rootNavigatorKey,
-    initialLocation: '/panel',
+    initialLocation: tourDone ? '/panel' : '/onboarding',
     refreshListenable: _AuthRefreshNotifier(
       Supabase.instance.client.auth.onAuthStateChange,
     ),
     redirect: (context, state) {
       final loggedIn = Supabase.instance.client.auth.currentSession != null;
+      // Onboarding turu kimlik dogrulamasindan bagimsiz gosterilir.
+      if (state.matchedLocation == '/onboarding') return null;
       final onAuthPage = state.matchedLocation == '/giris' ||
           state.matchedLocation == '/kayit';
       if (!loggedIn) return onAuthPage ? null : '/giris';
@@ -58,9 +62,17 @@ GoRouter createRouter() {
       return null;
     },
     routes: [
+      GoRoute(
+        path: '/onboarding',
+        builder: (context, state) => const OnboardingScreen(),
+      ),
       GoRoute(path: '/giris', builder: (context, state) => const LoginScreen()),
       GoRoute(
           path: '/kayit', builder: (context, state) => const RegisterScreen()),
+      GoRoute(
+        path: '/ayarlar',
+        builder: (context, state) => const SettingsScreen(),
+      ),
       StatefulShellRoute.indexedStack(
         builder: (context, state, navigationShell) => HomeBlocProviders(
           child: HomeShell(navigationShell: navigationShell),

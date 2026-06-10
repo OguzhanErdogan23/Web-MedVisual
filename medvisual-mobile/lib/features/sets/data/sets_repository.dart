@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 
 import '../../../core/api_client.dart';
+import '../../../core/export_file.dart';
 import '../domain/candidate.dart';
 import '../domain/card_set.dart';
 import '../domain/flashcard.dart';
@@ -97,6 +98,35 @@ class SetsRepository {
           if (term != null && term.isNotEmpty) 'term': term,
         });
         return MatchResult.fromJson(res.data!);
+      });
+
+  /// Desteyi secilen formatta disa aktarir; ham bayt + dosya adini doner.
+  Future<ExportFile> export(String id, String format) => guardApi(() async {
+        final res = await _dio.get<List<int>>(
+          '/sets/$id/export',
+          queryParameters: {'format': format},
+          options: Options(responseType: ResponseType.bytes),
+        );
+        return ExportFile(
+          bytes: res.data ?? const [],
+          filename: filenameFromResponse(res, fallback: 'deste.$format'),
+        );
+      });
+
+  /// Toplu otomatik gorsel uretimini baslatir (202; sonra set poll'lanir).
+  Future<void> autoImages(String id, {String? range, String? documentId}) =>
+      guardApi(() async {
+        await _dio.post<Map<String, dynamic>>('/sets/$id/auto-images', data: {
+          if (range != null && range.isNotEmpty) 'range': range,
+          if (documentId != null) 'document_id': documentId,
+        });
+      });
+
+  /// Karttan gorseli kaldirir; guncellenmis kart doner (image_url null).
+  Future<Flashcard> removeImage(String cardId) => guardApi(() async {
+        final res =
+            await _dio.delete<Map<String, dynamic>>('/cards/$cardId/image');
+        return Flashcard.fromJson(res.data!);
       });
 
   /// Secilen adayi kalici gorsel yapar; guncellenmis kart doner.

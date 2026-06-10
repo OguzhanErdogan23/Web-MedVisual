@@ -2,8 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../core/export_sheet.dart';
 import '../../../core/theme.dart';
 import '../../../core/widgets.dart';
+import '../data/quizzes_repository.dart';
 import '../domain/quiz.dart';
 import 'quizzes_cubit.dart';
 
@@ -82,6 +84,45 @@ class _QuizTile extends StatelessWidget {
     if (ok == true) cubit.delete(quiz.id);
   }
 
+  Future<void> _rename(BuildContext context) async {
+    final cubit = context.read<QuizzesCubit>();
+    final controller = TextEditingController(text: quiz.title);
+    final title = await showDialog<String>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Quizi yeniden adlandir'),
+        content: TextField(
+          controller: controller,
+          autofocus: true,
+          decoration: const InputDecoration(labelText: 'Baslik'),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext),
+            child: const Text('Vazgec'),
+          ),
+          FilledButton(
+            onPressed: () =>
+                Navigator.pop(dialogContext, controller.text.trim()),
+            child: const Text('Kaydet'),
+          ),
+        ],
+      ),
+    );
+    if (title != null && title.isNotEmpty && title != quiz.title) {
+      cubit.rename(quiz.id, title);
+    }
+  }
+
+  Future<void> _export(BuildContext context) {
+    final repo = context.read<QuizzesRepository>();
+    return showExportSheet(
+      context,
+      formats: const ['json', 'csv', 'txt', 'pdf'],
+      download: (format) => repo.export(quiz.id, format),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Card(
@@ -103,14 +144,46 @@ class _QuizTile extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             StatusChip(status: quiz.status),
-            IconButton(
-              tooltip: 'Sil',
-              icon: const Icon(Icons.delete_outline),
-              onPressed: () => _confirmDelete(context),
+            PopupMenuButton<String>(
+              onSelected: (value) => switch (value) {
+                'rename' => _rename(context),
+                'export' => _export(context),
+                'delete' => _confirmDelete(context),
+                _ => null,
+              },
+              itemBuilder: (context) => [
+                const PopupMenuItem(
+                  value: 'rename',
+                  child: ListTile(
+                    leading: Icon(Icons.edit_outlined),
+                    title: Text('Yeniden adlandir'),
+                    contentPadding: EdgeInsets.zero,
+                  ),
+                ),
+                if (quiz.isReady)
+                  const PopupMenuItem(
+                    value: 'export',
+                    child: ListTile(
+                      leading: Icon(Icons.ios_share),
+                      title: Text('Dışa Aktar'),
+                      contentPadding: EdgeInsets.zero,
+                    ),
+                  ),
+                const PopupMenuItem(
+                  value: 'delete',
+                  child: ListTile(
+                    leading:
+                        Icon(Icons.delete_outline, color: AppColors.danger),
+                    title: Text('Sil'),
+                    contentPadding: EdgeInsets.zero,
+                  ),
+                ),
+              ],
             ),
           ],
         ),
         onTap: () => context.push('/quizler/${quiz.id}'),
+        onLongPress: () => _rename(context),
       ),
     );
   }

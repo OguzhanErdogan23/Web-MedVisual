@@ -14,7 +14,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$DocumentsState {
 
- ViewStatus get status; List<Document> get documents; StudyStats? get stats; bool get uploading; String? get error; String? get notice;
+ ViewStatus get status; List<Document> get documents; StudyStats? get stats; StudyHistory? get history; bool get uploading; String? get error; String? get notice;
 /// Create a copy of DocumentsState
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -25,16 +25,16 @@ $DocumentsStateCopyWith<DocumentsState> get copyWith => _$DocumentsStateCopyWith
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is DocumentsState&&(identical(other.status, status) || other.status == status)&&const DeepCollectionEquality().equals(other.documents, documents)&&(identical(other.stats, stats) || other.stats == stats)&&(identical(other.uploading, uploading) || other.uploading == uploading)&&(identical(other.error, error) || other.error == error)&&(identical(other.notice, notice) || other.notice == notice));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is DocumentsState&&(identical(other.status, status) || other.status == status)&&const DeepCollectionEquality().equals(other.documents, documents)&&(identical(other.stats, stats) || other.stats == stats)&&(identical(other.history, history) || other.history == history)&&(identical(other.uploading, uploading) || other.uploading == uploading)&&(identical(other.error, error) || other.error == error)&&(identical(other.notice, notice) || other.notice == notice));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,status,const DeepCollectionEquality().hash(documents),stats,uploading,error,notice);
+int get hashCode => Object.hash(runtimeType,status,const DeepCollectionEquality().hash(documents),stats,history,uploading,error,notice);
 
 @override
 String toString() {
-  return 'DocumentsState(status: $status, documents: $documents, stats: $stats, uploading: $uploading, error: $error, notice: $notice)';
+  return 'DocumentsState(status: $status, documents: $documents, stats: $stats, history: $history, uploading: $uploading, error: $error, notice: $notice)';
 }
 
 
@@ -45,11 +45,11 @@ abstract mixin class $DocumentsStateCopyWith<$Res>  {
   factory $DocumentsStateCopyWith(DocumentsState value, $Res Function(DocumentsState) _then) = _$DocumentsStateCopyWithImpl;
 @useResult
 $Res call({
- ViewStatus status, List<Document> documents, StudyStats? stats, bool uploading, String? error, String? notice
+ ViewStatus status, List<Document> documents, StudyStats? stats, StudyHistory? history, bool uploading, String? error, String? notice
 });
 
 
-$StudyStatsCopyWith<$Res>? get stats;
+$StudyStatsCopyWith<$Res>? get stats;$StudyHistoryCopyWith<$Res>? get history;
 
 }
 /// @nodoc
@@ -62,12 +62,13 @@ class _$DocumentsStateCopyWithImpl<$Res>
 
 /// Create a copy of DocumentsState
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? status = null,Object? documents = null,Object? stats = freezed,Object? uploading = null,Object? error = freezed,Object? notice = freezed,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? status = null,Object? documents = null,Object? stats = freezed,Object? history = freezed,Object? uploading = null,Object? error = freezed,Object? notice = freezed,}) {
   return _then(_self.copyWith(
 status: null == status ? _self.status : status // ignore: cast_nullable_to_non_nullable
 as ViewStatus,documents: null == documents ? _self.documents : documents // ignore: cast_nullable_to_non_nullable
 as List<Document>,stats: freezed == stats ? _self.stats : stats // ignore: cast_nullable_to_non_nullable
-as StudyStats?,uploading: null == uploading ? _self.uploading : uploading // ignore: cast_nullable_to_non_nullable
+as StudyStats?,history: freezed == history ? _self.history : history // ignore: cast_nullable_to_non_nullable
+as StudyHistory?,uploading: null == uploading ? _self.uploading : uploading // ignore: cast_nullable_to_non_nullable
 as bool,error: freezed == error ? _self.error : error // ignore: cast_nullable_to_non_nullable
 as String?,notice: freezed == notice ? _self.notice : notice // ignore: cast_nullable_to_non_nullable
 as String?,
@@ -84,6 +85,18 @@ $StudyStatsCopyWith<$Res>? get stats {
 
   return $StudyStatsCopyWith<$Res>(_self.stats!, (value) {
     return _then(_self.copyWith(stats: value));
+  });
+}/// Create a copy of DocumentsState
+/// with the given fields replaced by the non-null parameter values.
+@override
+@pragma('vm:prefer-inline')
+$StudyHistoryCopyWith<$Res>? get history {
+    if (_self.history == null) {
+    return null;
+  }
+
+  return $StudyHistoryCopyWith<$Res>(_self.history!, (value) {
+    return _then(_self.copyWith(history: value));
   });
 }
 }
@@ -167,10 +180,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( ViewStatus status,  List<Document> documents,  StudyStats? stats,  bool uploading,  String? error,  String? notice)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( ViewStatus status,  List<Document> documents,  StudyStats? stats,  StudyHistory? history,  bool uploading,  String? error,  String? notice)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _DocumentsState() when $default != null:
-return $default(_that.status,_that.documents,_that.stats,_that.uploading,_that.error,_that.notice);case _:
+return $default(_that.status,_that.documents,_that.stats,_that.history,_that.uploading,_that.error,_that.notice);case _:
   return orElse();
 
 }
@@ -188,10 +201,10 @@ return $default(_that.status,_that.documents,_that.stats,_that.uploading,_that.e
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( ViewStatus status,  List<Document> documents,  StudyStats? stats,  bool uploading,  String? error,  String? notice)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( ViewStatus status,  List<Document> documents,  StudyStats? stats,  StudyHistory? history,  bool uploading,  String? error,  String? notice)  $default,) {final _that = this;
 switch (_that) {
 case _DocumentsState():
-return $default(_that.status,_that.documents,_that.stats,_that.uploading,_that.error,_that.notice);case _:
+return $default(_that.status,_that.documents,_that.stats,_that.history,_that.uploading,_that.error,_that.notice);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -208,10 +221,10 @@ return $default(_that.status,_that.documents,_that.stats,_that.uploading,_that.e
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( ViewStatus status,  List<Document> documents,  StudyStats? stats,  bool uploading,  String? error,  String? notice)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( ViewStatus status,  List<Document> documents,  StudyStats? stats,  StudyHistory? history,  bool uploading,  String? error,  String? notice)?  $default,) {final _that = this;
 switch (_that) {
 case _DocumentsState() when $default != null:
-return $default(_that.status,_that.documents,_that.stats,_that.uploading,_that.error,_that.notice);case _:
+return $default(_that.status,_that.documents,_that.stats,_that.history,_that.uploading,_that.error,_that.notice);case _:
   return null;
 
 }
@@ -223,7 +236,7 @@ return $default(_that.status,_that.documents,_that.stats,_that.uploading,_that.e
 
 
 class _DocumentsState implements DocumentsState {
-  const _DocumentsState({this.status = ViewStatus.initial, final  List<Document> documents = const <Document>[], this.stats, this.uploading = false, this.error, this.notice}): _documents = documents;
+  const _DocumentsState({this.status = ViewStatus.initial, final  List<Document> documents = const <Document>[], this.stats, this.history, this.uploading = false, this.error, this.notice}): _documents = documents;
   
 
 @override@JsonKey() final  ViewStatus status;
@@ -235,6 +248,7 @@ class _DocumentsState implements DocumentsState {
 }
 
 @override final  StudyStats? stats;
+@override final  StudyHistory? history;
 @override@JsonKey() final  bool uploading;
 @override final  String? error;
 @override final  String? notice;
@@ -249,16 +263,16 @@ _$DocumentsStateCopyWith<_DocumentsState> get copyWith => __$DocumentsStateCopyW
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _DocumentsState&&(identical(other.status, status) || other.status == status)&&const DeepCollectionEquality().equals(other._documents, _documents)&&(identical(other.stats, stats) || other.stats == stats)&&(identical(other.uploading, uploading) || other.uploading == uploading)&&(identical(other.error, error) || other.error == error)&&(identical(other.notice, notice) || other.notice == notice));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _DocumentsState&&(identical(other.status, status) || other.status == status)&&const DeepCollectionEquality().equals(other._documents, _documents)&&(identical(other.stats, stats) || other.stats == stats)&&(identical(other.history, history) || other.history == history)&&(identical(other.uploading, uploading) || other.uploading == uploading)&&(identical(other.error, error) || other.error == error)&&(identical(other.notice, notice) || other.notice == notice));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,status,const DeepCollectionEquality().hash(_documents),stats,uploading,error,notice);
+int get hashCode => Object.hash(runtimeType,status,const DeepCollectionEquality().hash(_documents),stats,history,uploading,error,notice);
 
 @override
 String toString() {
-  return 'DocumentsState(status: $status, documents: $documents, stats: $stats, uploading: $uploading, error: $error, notice: $notice)';
+  return 'DocumentsState(status: $status, documents: $documents, stats: $stats, history: $history, uploading: $uploading, error: $error, notice: $notice)';
 }
 
 
@@ -269,11 +283,11 @@ abstract mixin class _$DocumentsStateCopyWith<$Res> implements $DocumentsStateCo
   factory _$DocumentsStateCopyWith(_DocumentsState value, $Res Function(_DocumentsState) _then) = __$DocumentsStateCopyWithImpl;
 @override @useResult
 $Res call({
- ViewStatus status, List<Document> documents, StudyStats? stats, bool uploading, String? error, String? notice
+ ViewStatus status, List<Document> documents, StudyStats? stats, StudyHistory? history, bool uploading, String? error, String? notice
 });
 
 
-@override $StudyStatsCopyWith<$Res>? get stats;
+@override $StudyStatsCopyWith<$Res>? get stats;@override $StudyHistoryCopyWith<$Res>? get history;
 
 }
 /// @nodoc
@@ -286,12 +300,13 @@ class __$DocumentsStateCopyWithImpl<$Res>
 
 /// Create a copy of DocumentsState
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? status = null,Object? documents = null,Object? stats = freezed,Object? uploading = null,Object? error = freezed,Object? notice = freezed,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? status = null,Object? documents = null,Object? stats = freezed,Object? history = freezed,Object? uploading = null,Object? error = freezed,Object? notice = freezed,}) {
   return _then(_DocumentsState(
 status: null == status ? _self.status : status // ignore: cast_nullable_to_non_nullable
 as ViewStatus,documents: null == documents ? _self._documents : documents // ignore: cast_nullable_to_non_nullable
 as List<Document>,stats: freezed == stats ? _self.stats : stats // ignore: cast_nullable_to_non_nullable
-as StudyStats?,uploading: null == uploading ? _self.uploading : uploading // ignore: cast_nullable_to_non_nullable
+as StudyStats?,history: freezed == history ? _self.history : history // ignore: cast_nullable_to_non_nullable
+as StudyHistory?,uploading: null == uploading ? _self.uploading : uploading // ignore: cast_nullable_to_non_nullable
 as bool,error: freezed == error ? _self.error : error // ignore: cast_nullable_to_non_nullable
 as String?,notice: freezed == notice ? _self.notice : notice // ignore: cast_nullable_to_non_nullable
 as String?,
@@ -309,6 +324,18 @@ $StudyStatsCopyWith<$Res>? get stats {
 
   return $StudyStatsCopyWith<$Res>(_self.stats!, (value) {
     return _then(_self.copyWith(stats: value));
+  });
+}/// Create a copy of DocumentsState
+/// with the given fields replaced by the non-null parameter values.
+@override
+@pragma('vm:prefer-inline')
+$StudyHistoryCopyWith<$Res>? get history {
+    if (_self.history == null) {
+    return null;
+  }
+
+  return $StudyHistoryCopyWith<$Res>(_self.history!, (value) {
+    return _then(_self.copyWith(history: value));
   });
 }
 }

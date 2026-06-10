@@ -3,6 +3,7 @@ import 'package:dio/dio.dart';
 import '../../../core/api_client.dart';
 import '../domain/review_state.dart';
 import '../domain/sm2.dart';
+import '../domain/study_history.dart';
 import '../domain/study_models.dart';
 
 /// Aralikli tekrar uclari. SM-2 otoritesi sunucudur; istemci yalnizca
@@ -42,5 +43,13 @@ class StudyRepository {
   Future<StudyStats> stats() => guardApi(() async {
         final res = await _dio.get<Map<String, dynamic>>('/study/stats');
         return StudyStats.fromJson(res.data!);
+      });
+
+  Future<StudyHistory> history({int days = 14}) => guardApi(() async {
+        final res = await _dio.get<Map<String, dynamic>>(
+          '/study/history',
+          queryParameters: {'days': days},
+        );
+        return StudyHistory.fromJson(res.data!);
       });
 }

@@ -169,6 +169,71 @@ class EmptyView extends StatelessWidget {
   }
 }
 
+/// Terim girisi icin otomatik tamamlamali alan. [options] bellekte tutulan
+/// terim listesidir; bos olabilir (o zaman duz metin alani gibi davranir).
+class TermAutocompleteField extends StatelessWidget {
+  const TermAutocompleteField({
+    super.key,
+    required this.controller,
+    required this.options,
+    this.labelText = 'Terim (istege bagli)',
+  });
+
+  final TextEditingController controller;
+  final List<String> options;
+  final String labelText;
+
+  @override
+  Widget build(BuildContext context) {
+    return Autocomplete<String>(
+      initialValue: controller.value,
+      optionsBuilder: (value) {
+        final query = value.text.trim().toLowerCase();
+        if (query.isEmpty) return const Iterable<String>.empty();
+        return options
+            .where((o) => o.toLowerCase().contains(query))
+            .take(20);
+      },
+      onSelected: (selection) => controller.text = selection,
+      fieldViewBuilder:
+          (context, textController, focusNode, onFieldSubmitted) {
+        return TextField(
+          controller: textController,
+          focusNode: focusNode,
+          decoration: InputDecoration(labelText: labelText),
+          // Dis controller'i her degisiklikte senkronla (manuel giris dahil).
+          onChanged: (value) => controller.text = value,
+        );
+      },
+      optionsViewBuilder: (context, onSelected, opts) {
+        return Align(
+          alignment: Alignment.topLeft,
+          child: Material(
+            elevation: 4,
+            borderRadius: BorderRadius.circular(8),
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxHeight: 240, maxWidth: 360),
+              child: ListView.builder(
+                padding: EdgeInsets.zero,
+                shrinkWrap: true,
+                itemCount: opts.length,
+                itemBuilder: (context, i) {
+                  final option = opts.elementAt(i);
+                  return ListTile(
+                    dense: true,
+                    title: Text(option),
+                    onTap: () => onSelected(option),
+                  );
+                },
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+}
+
 void showSnack(BuildContext context, String message, {bool error = false}) {
   ScaffoldMessenger.of(context)
     ..hideCurrentSnackBar()

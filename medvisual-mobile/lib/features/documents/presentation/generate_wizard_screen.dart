@@ -182,7 +182,7 @@ class _WizardBodyState extends State<_WizardBody> {
                     onChanged: (v) => setState(() => _enhance = v),
                     title: const Text('Gemini ile zenginlestir'),
                     subtitle: const Text(
-                        'LLM destegi: daha kaliteli kart/soru metinleri'),
+                        'Daha tutarli ve klinik odakli sorular icin onerilir.'),
                     secondary:
                         const Icon(Icons.auto_awesome, color: AppColors.teal),
                     contentPadding: EdgeInsets.zero,

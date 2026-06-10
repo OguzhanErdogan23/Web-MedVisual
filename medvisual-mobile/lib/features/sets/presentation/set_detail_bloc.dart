@@ -52,6 +52,21 @@ final class CardReplaced extends SetDetailEvent {
   final Flashcard card;
 }
 
+/// Karttan gorseli kaldir (DELETE /cards/{id}/image).
+final class CardImageRemoveRequested extends SetDetailEvent {
+  const CardImageRemoveRequested(this.cardId);
+
+  final String cardId;
+}
+
+/// Toplu otomatik gorsel uretimini baslat (POST /sets/{id}/auto-images).
+final class SetAutoImagesRequested extends SetDetailEvent {
+  const SetAutoImagesRequested({this.range, this.documentId});
+
+  final String? range;
+  final String? documentId;
+}
+
 @freezed
 abstract class SetDetailState with _$SetDetailState {
   const factory SetDetailState({
@@ -71,6 +86,8 @@ class SetDetailBloc extends Bloc<SetDetailEvent, SetDetailState> {
     on<CardDeleteRequested>(_onCardDelete);
     on<CardAddSubmitted>(_onCardAdd);
     on<CardReplaced>(_onCardReplaced);
+    on<CardImageRemoveRequested>(_onCardImageRemove);
+    on<SetAutoImagesRequested>(_onAutoImages);
   }
 
   final SetsRepository _repo;
@@ -145,6 +162,30 @@ class SetDetailBloc extends Bloc<SetDetailEvent, SetDetailState> {
   void _onCardReplaced(CardReplaced event, Emitter<SetDetailState> emit) {
     _replaceCard(emit, event.card);
     _notify(emit, 'Gorsel karta eklendi.');
+  }
+
+  Future<void> _onCardImageRemove(
+      CardImageRemoveRequested event, Emitter<SetDetailState> emit) async {
+    try {
+      final updated = await _repo.removeImage(event.cardId);
+      _replaceCard(emit, updated);
+      _notify(emit, 'Gorsel kaldirildi.');
+    } on ApiException catch (e) {
+      _notify(emit, e.message);
+    }
+  }
+
+  Future<void> _onAutoImages(
+      SetAutoImagesRequested event, Emitter<SetDetailState> emit) async {
+    try {
+      await _repo.autoImages(setId,
+          range: event.range, documentId: event.documentId);
+      _notify(emit, 'Toplu gorsel uretimi baslatildi.');
+      // Sunucu durumu `generating`e cekilir; poll ile ilerleme izlenir.
+      await _load(emit, silent: true);
+    } on ApiException catch (e) {
+      _notify(emit, e.message);
+    }
   }
 
   void _replaceCard(Emitter<SetDetailState> emit, Flashcard card) {

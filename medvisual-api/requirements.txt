@@ -7,4 +7,5 @@ python-dotenv>=1.0
 python-multipart>=0.0.9
 fpdf2>=2.7
 genanki>=0.13
+google-genai>=1.0
 pytest>=8.0

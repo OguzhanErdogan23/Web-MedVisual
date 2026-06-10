@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 
 import '../../../core/api_client.dart';
+import '../../../core/export_file.dart';
 import '../domain/quiz.dart';
 
 /// Quiz uclari (uretim documents repository'sindedir).
@@ -24,4 +25,25 @@ class QuizzesRepository {
 
   Future<void> delete(String id) =>
       guardApi(() => _dio.delete<void>('/quizzes/$id'));
+
+  Future<Quiz> rename(String id, String title) => guardApi(() async {
+        final res = await _dio.patch<Map<String, dynamic>>(
+          '/quizzes/$id',
+          data: {'title': title},
+        );
+        return Quiz.fromJson(res.data!);
+      });
+
+  /// Quizi secilen formatta disa aktarir; ham bayt + dosya adini doner.
+  Future<ExportFile> export(String id, String format) => guardApi(() async {
+        final res = await _dio.get<List<int>>(
+          '/quizzes/$id/export',
+          queryParameters: {'format': format},
+          options: Options(responseType: ResponseType.bytes),
+        );
+        return ExportFile(
+          bytes: res.data ?? const [],
+          filename: filenameFromResponse(res, fallback: 'quiz.$format'),
+        );
+      });
 }

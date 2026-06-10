@@ -50,4 +50,20 @@ class QuizzesCubit extends Cubit<QuizzesState> {
       emit(state.copyWith(notice: null));
     }
   }
+
+  Future<void> rename(String id, String title) async {
+    try {
+      final updated = await _repo.rename(id, title);
+      emit(state.copyWith(
+        quizzes: [
+          for (final q in state.quizzes) q.id == id ? updated : q,
+        ],
+        notice: 'Quiz yeniden adlandirildi.',
+      ));
+      emit(state.copyWith(notice: null));
+    } on ApiException catch (e) {
+      emit(state.copyWith(notice: e.message));
+      emit(state.copyWith(notice: null));
+    }
+  }
 }

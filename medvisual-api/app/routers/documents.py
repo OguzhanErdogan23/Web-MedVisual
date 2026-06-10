@@ -6,7 +6,7 @@ BackgroundTasks ile calisir, istemci status alanini poll'lar.
 """
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, UploadFile
 
-from app import dip_client
+from app import dip_client, gemini
 from app.db import get_db
 from app.deps import AuthUser, get_current_user
 from app.dip_client import DipError
@@ -43,12 +43,23 @@ def _generate_cards_job(
 ) -> None:
     db = get_db()
     try:
+        # DIP'ten her zaman offline (cikarimsal) kartlari al — hizli, DIP'in
+        # kendi Gemini kotasini yakmaz. Zenginlestirme backend'de yapilir.
         res = dip_client.generate_cards(
-            dip_doc_id, req.range, req.source, req.max_cards, req.enhance
+            dip_doc_id, req.range, req.source, req.max_cards, enhance=False
         )
         cards = res.get("cards", [])
         if not cards:
             raise DipError(res.get("reason") or "Bu aralikta kart uretilemedi.")
+
+        # Backend Gemini model-fallback zinciri ile iyilestir (istenirse).
+        used = "offline"
+        if req.enhance and gemini.is_available():
+            enhanced, model = gemini.enhance_cards(cards, req.max_cards)
+            if enhanced:
+                cards = enhanced
+                used = model
+
         rows = [
             {
                 "set_id": set_id,
@@ -63,12 +74,11 @@ def _generate_cards_job(
             for i, c in enumerate(cards)
         ]
         db.table("flashcards").insert(rows).execute()
-        gemini = "Gemini" if res.get("llm_enhanced") else "offline"
         db.table("flashcard_sets").update(
             {
                 "status": "ready",
                 "error": None,
-                "description": f"Sayfa {req.range} | {len(cards)} kart | uretim: {gemini}",
+                "description": f"Sayfa {req.range} | {len(cards)} kart | uretim: {used}",
             }
         ).eq("id", set_id).execute()
     except Exception as exc:
@@ -83,13 +93,22 @@ def _generate_quiz_job(
     db = get_db()
     try:
         res = dip_client.generate_quiz(
-            dip_doc_id, req.range, req.source, req.n_questions, req.enhance
+            dip_doc_id, req.range, req.source, req.n_questions, enhance=False
         )
         questions = res.get("questions", [])
         if not questions:
             raise DipError(
                 res.get("warning") or "Bu aralikta quiz sorusu uretilemedi."
             )
+
+        # Backend Gemini zinciri ile iyilestir (mukerrer sikleri eler, klinik yapar).
+        used = "offline"
+        if req.enhance and gemini.is_available():
+            enhanced, model = gemini.enhance_quiz(questions, req.n_questions)
+            if enhanced:
+                questions = enhanced
+                used = model
+
         rows = [
             {
                 "quiz_id": quiz_id,

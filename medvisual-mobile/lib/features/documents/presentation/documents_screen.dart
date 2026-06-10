@@ -5,8 +5,8 @@ import 'package:go_router/go_router.dart';
 
 import '../../../core/theme.dart';
 import '../../../core/widgets.dart';
-import '../../auth/presentation/auth_cubit.dart';
 import '../../study/domain/study_models.dart';
+import '../../study/presentation/progress_chart.dart';
 import '../domain/document.dart';
 import 'books_sheet.dart';
 import 'documents_bloc.dart';
@@ -43,9 +43,9 @@ class DocumentsScreen extends StatelessWidget {
             onPressed: () => showBooksSheet(context),
           ),
           IconButton(
-            tooltip: 'Cikis yap',
-            icon: const Icon(Icons.logout),
-            onPressed: () => context.read<AuthCubit>().signOut(),
+            tooltip: 'Ayarlar',
+            icon: const Icon(Icons.settings_outlined),
+            onPressed: () => context.push('/ayarlar'),
           ),
         ],
       ),
@@ -92,6 +92,8 @@ class DocumentsScreen extends StatelessWidget {
               padding: const EdgeInsets.only(bottom: 96),
               children: [
                 if (state.stats != null) _StatsRow(stats: state.stats!),
+                if (state.history != null)
+                  ProgressChart(history: state.history!),
                 Padding(
                   padding: const EdgeInsets.fromLTRB(20, 16, 20, 4),
                   child: Text(

@@ -1,11 +1,17 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/api_client.dart';
+import '../../../core/export_sheet.dart';
 import '../../../core/theme.dart';
 import '../../../core/widgets.dart';
+import '../../documents/data/documents_repository.dart';
+import '../../documents/domain/document.dart';
 import '../../sets/data/sets_repository.dart';
+import '../../sets/data/terms_repository.dart';
 import '../domain/card_set.dart';
 import '../domain/flashcard.dart';
 import 'candidate_sheet.dart';
@@ -33,6 +39,9 @@ class _SetDetailBody extends StatelessWidget {
 
   Future<void> _addCard(BuildContext context) async {
     final bloc = context.read<SetDetailBloc>();
+    final terms = context.read<TermsRepository>();
+    // Terim onerilerini arka planda yukle (onbellege alinir).
+    unawaited(terms.list().catchError((_) => <String>[]));
     final front = TextEditingController();
     final back = TextEditingController();
     final term = TextEditingController();
@@ -56,11 +65,7 @@ class _SetDetailBody extends StatelessWidget {
               decoration: const InputDecoration(labelText: 'Arka yuz (cevap)'),
             ),
             const SizedBox(height: 10),
-            TextField(
-              controller: term,
-              decoration:
-                  const InputDecoration(labelText: 'Terim (istege bagli)'),
-            ),
+            TermAutocompleteField(controller: term, options: terms.cached),
           ],
         ),
         actions: [
@@ -84,6 +89,84 @@ class _SetDetailBody extends StatelessWidget {
     }
   }
 
+  Future<void> _export(BuildContext context, String setId) {
+    final repo = context.read<SetsRepository>();
+    return showExportSheet(
+      context,
+      formats: const ['json', 'csv', 'tsv', 'anki', 'txt', 'pdf', 'apkg'],
+      download: (format) => repo.export(setId, format),
+    );
+  }
+
+  /// Toplu otomatik gorsel: hazir bir dokuman sec (varsayilan destenin
+  /// dokumani) ve onayla -> bloc auto-images olayini tetikler.
+  Future<void> _autoImages(BuildContext context, CardSet set) async {
+    final bloc = context.read<SetDetailBloc>();
+    final docsRepo = context.read<DocumentsRepository>();
+
+    List<Document> readyDocs = const [];
+    try {
+      final all = await docsRepo.list();
+      readyDocs = all.where((d) => d.isReady).toList();
+    } catch (_) {
+      // Liste alinamasa da destenin kendi dokumaniyla devam edilebilir.
+    }
+    if (!context.mounted) return;
+
+    String? documentId = set.documentId;
+    // Destenin dokumani yoksa kullaniciya hazir dokuman sectir.
+    if (documentId == null && readyDocs.isNotEmpty) {
+      documentId = await showModalBottomSheet<String>(
+        context: context,
+        showDragHandle: true,
+        builder: (sheetContext) => SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Padding(
+                padding: EdgeInsets.all(16),
+                child: Text('Gorsel kaynagi dokumani secin',
+                    style: TextStyle(fontWeight: FontWeight.w700)),
+              ),
+              for (final d in readyDocs)
+                ListTile(
+                  leading: const Icon(Icons.picture_as_pdf_outlined,
+                      color: AppColors.indigo),
+                  title: Text(d.filename,
+                      maxLines: 1, overflow: TextOverflow.ellipsis),
+                  onTap: () => Navigator.pop(sheetContext, d.id),
+                ),
+            ],
+          ),
+        ),
+      );
+      if (documentId == null || !context.mounted) return;
+    }
+
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Toplu gorsel uretilsin mi?'),
+        content: const Text(
+            'Gorseli olmayan tum kartlar icin DIP motorundan otomatik '
+            'gorsel aranacak. Bu islem birkac dakika surebilir.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, false),
+            child: const Text('Vazgec'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(dialogContext, true),
+            child: const Text('Baslat'),
+          ),
+        ],
+      ),
+    );
+    if (ok == true) {
+      bloc.add(SetAutoImagesRequested(documentId: documentId));
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return BlocConsumer<SetDetailBloc, SetDetailState>(
@@ -104,6 +187,28 @@ class _SetDetailBody extends StatelessWidget {
                   icon: const Icon(Icons.school_outlined),
                   onPressed: () =>
                       context.push('/calis/oturum?setId=${set.id}'),
+                ),
+              if (set != null && set.isReady && set.cards.isNotEmpty)
+                IconButton(
+                  tooltip: 'Dışa Aktar',
+                  icon: const Icon(Icons.ios_share),
+                  onPressed: () => _export(context, set.id),
+                ),
+              if (set != null && set.isReady && set.cards.isNotEmpty)
+                PopupMenuButton<String>(
+                  onSelected: (value) {
+                    if (value == 'auto-images') _autoImages(context, set);
+                  },
+                  itemBuilder: (context) => const [
+                    PopupMenuItem(
+                      value: 'auto-images',
+                      child: ListTile(
+                        leading: Icon(Icons.auto_awesome, color: AppColors.teal),
+                        title: Text('Toplu görsel ekle'),
+                        contentPadding: EdgeInsets.zero,
+                      ),
+                    ),
+                  ],
                 ),
             ],
           ),
@@ -256,8 +361,34 @@ class _FlashcardTileState extends State<_FlashcardTile> {
     if (updated != null) bloc.add(CardReplaced(updated));
   }
 
+  Future<void> _confirmRemoveImage(BuildContext context) async {
+    final bloc = context.read<SetDetailBloc>();
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Görsel kaldırılsın mı?'),
+        content: const Text('Bu kartın görseli kaldırılacak.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, false),
+            child: const Text('Vazgec'),
+          ),
+          FilledButton(
+            style: FilledButton.styleFrom(backgroundColor: AppColors.danger),
+            onPressed: () => Navigator.pop(dialogContext, true),
+            child: const Text('Kaldır'),
+          ),
+        ],
+      ),
+    );
+    if (ok == true) {
+      bloc.add(CardImageRemoveRequested(widget.card.id));
+    }
+  }
+
   void _showMenu(BuildContext context) {
     final bloc = context.read<SetDetailBloc>();
+    final hasImage = widget.card.imageUrl != null;
     showModalBottomSheet(
       context: context,
       showDragHandle: true,
@@ -273,15 +404,35 @@ class _FlashcardTileState extends State<_FlashcardTile> {
                 _edit(context);
               },
             ),
-            ListTile(
-              leading:
-                  const Icon(Icons.image_search, color: AppColors.teal),
-              title: const Text('Gorsel Bul'),
-              onTap: () {
-                Navigator.pop(sheetContext);
-                _findImage(context);
-              },
-            ),
+            if (hasImage) ...[
+              ListTile(
+                leading:
+                    const Icon(Icons.image_search, color: AppColors.teal),
+                title: const Text('Görseli Değiştir'),
+                onTap: () {
+                  Navigator.pop(sheetContext);
+                  _findImage(context);
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.hide_image_outlined,
+                    color: AppColors.warning),
+                title: const Text('Görseli Kaldır'),
+                onTap: () {
+                  Navigator.pop(sheetContext);
+                  _confirmRemoveImage(context);
+                },
+              ),
+            ] else
+              ListTile(
+                leading:
+                    const Icon(Icons.image_search, color: AppColors.teal),
+                title: const Text('Gorsel Bul'),
+                onTap: () {
+                  Navigator.pop(sheetContext);
+                  _findImage(context);
+                },
+              ),
             ListTile(
               leading:
                   const Icon(Icons.delete_outline, color: AppColors.danger),

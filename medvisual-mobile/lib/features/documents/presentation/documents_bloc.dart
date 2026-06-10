@@ -6,6 +6,7 @@ import 'package:freezed_annotation/freezed_annotation.dart';
 import '../../../core/api_client.dart';
 import '../../../core/widgets.dart';
 import '../../study/data/study_repository.dart';
+import '../../study/domain/study_history.dart';
 import '../../study/domain/study_models.dart';
 import '../data/documents_repository.dart';
 import '../domain/document.dart';
@@ -64,6 +65,7 @@ abstract class DocumentsState with _$DocumentsState {
     @Default(ViewStatus.initial) ViewStatus status,
     @Default(<Document>[]) List<Document> documents,
     StudyStats? stats,
+    StudyHistory? history,
     @Default(false) bool uploading,
     String? error,
     String? notice,
@@ -106,13 +108,16 @@ class DocumentsBloc extends Bloc<DocumentsEvent, DocumentsState> {
       final results = await Future.wait([
         _documents.list(),
         _study.stats(),
+        _study.history(days: 14),
       ]);
       final docs = results[0] as List<Document>;
       final stats = results[1] as StudyStats;
+      final history = results[2] as StudyHistory;
       emit(state.copyWith(
         status: ViewStatus.success,
         documents: docs,
         stats: stats,
+        history: history,
         error: null,
       ));
       _syncPolling(docs);
