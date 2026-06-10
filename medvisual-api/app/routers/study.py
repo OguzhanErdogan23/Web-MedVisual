@@ -117,16 +117,20 @@ def study_history(days: int = 14, user: AuthUser = Depends(get_current_user)):
     """Son N gunun gunluk calisma ozeti (ilerleme grafikleri icin)."""
     from collections import defaultdict
 
-    rows = (
-        get_db()
-        .table("review_events")
-        .select("grade, reviewed_at")
-        .eq("user_id", user.id)
-        .order("reviewed_at", desc=True)
-        .limit(2000)
-        .execute()
-        .data
-    )
+    try:
+        rows = (
+            get_db()
+            .table("review_events")
+            .select("grade, reviewed_at")
+            .eq("user_id", user.id)
+            .order("reviewed_at", desc=True)
+            .limit(2000)
+            .execute()
+            .data
+        )
+    except Exception:
+        # review_events tablosu (migration_02) henuz uygulanmadiysa bos don.
+        return {"days": [], "total_reviews": 0, "needs_migration": True}
     by_day = defaultdict(lambda: {"total": 0, "correct": 0})
     for r in rows:
         day = r["reviewed_at"][:10]
