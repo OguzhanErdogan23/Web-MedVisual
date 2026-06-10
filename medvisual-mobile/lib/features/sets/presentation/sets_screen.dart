@@ -1,3 +1,4 @@
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
@@ -11,10 +12,77 @@ import 'sets_bloc.dart';
 class SetsScreen extends StatelessWidget {
   const SetsScreen({super.key});
 
+  /// Kart dosyasi sec -> istege bagli deste adi sor -> ice aktarimi baslat.
+  Future<void> _importCards(BuildContext context) async {
+    final bloc = context.read<SetsBloc>();
+    final result = await FilePicker.platform.pickFiles(
+      type: FileType.custom,
+      allowedExtensions: ['csv', 'json', 'tsv', 'apkg', 'txt'],
+      withData: false,
+    );
+    final file = result?.files.firstOrNull;
+    final path = file?.path;
+    if (file == null || path == null || !context.mounted) return;
+
+    final controller = TextEditingController();
+    final title = await showDialog<String>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Kart Dosyası İçe Aktar'),
+        content: TextField(
+          controller: controller,
+          autofocus: true,
+          decoration: const InputDecoration(
+            labelText: 'Deste adı',
+            helperText: 'Boş bırakılırsa dosya adı kullanılır',
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext),
+            child: const Text('Vazgeç'),
+          ),
+          FilledButton(
+            onPressed: () =>
+                Navigator.pop(dialogContext, controller.text.trim()),
+            child: const Text('İçe Aktar'),
+          ),
+        ],
+      ),
+    );
+    if (title == null) return; // Vazgecildi.
+    bloc.add(SetImportRequested(
+      filePath: path,
+      filename: file.name,
+      setTitle: title.isEmpty ? null : title,
+    ));
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Desteler')),
+      appBar: AppBar(
+        title: const Text('Desteler'),
+        actions: [
+          BlocBuilder<SetsBloc, SetsState>(
+            buildWhen: (p, c) => p.importing != c.importing,
+            builder: (context, state) => state.importing
+                ? const Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 16),
+                    child: SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    ),
+                  )
+                : IconButton(
+                    icon: const Icon(Icons.upload_file_outlined),
+                    tooltip: 'Kart Dosyası İçe Aktar',
+                    onPressed: () => _importCards(context),
+                  ),
+          ),
+        ],
+      ),
       body: BlocConsumer<SetsBloc, SetsState>(
         listenWhen: (p, c) => p.notice != c.notice,
         listener: (context, state) {

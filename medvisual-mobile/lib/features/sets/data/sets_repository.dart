@@ -36,6 +36,22 @@ class SetsRepository {
   Future<void> delete(String id) =>
       guardApi(() => _dio.delete<void>('/sets/$id'));
 
+  /// Kart dosyasini (CSV/JSON/TSV/APKG/TXT) ice aktarir; olusan deste doner.
+  Future<CardSet> importCards({
+    required String filePath,
+    required String filename,
+    String? setTitle,
+  }) =>
+      guardApi(() async {
+        final form = FormData.fromMap({
+          'file': await MultipartFile.fromFile(filePath, filename: filename),
+          if (setTitle != null && setTitle.isNotEmpty) 'set_title': setTitle,
+        });
+        final res =
+            await _dio.post<Map<String, dynamic>>('/cards/import', data: form);
+        return CardSet.fromJson(res.data!);
+      });
+
   Future<Flashcard> addCard(
     String setId, {
     required String front,

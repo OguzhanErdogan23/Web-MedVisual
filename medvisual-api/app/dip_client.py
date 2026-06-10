@@ -19,9 +19,12 @@ class DipError(Exception):
         self.status = status  # 0 = baglanti hatasi (HTTP yaniti yok)
 
 
+# Taranmis (OCR gerektiren) kitaplarda genis sayfa araliklari dakikalar
+# surebilir; okuma timeout'u bu yuzden cok genis tutulur. Istemciler zaten
+# polling yapar, bu istekler arka plan gorevlerinde calisir.
 _client = httpx.Client(
     base_url=settings.DIP_ENGINE_URL,
-    timeout=httpx.Timeout(300.0, connect=10.0),
+    timeout=httpx.Timeout(connect=10.0, read=1800.0, write=120.0, pool=30.0),
 )
 
 

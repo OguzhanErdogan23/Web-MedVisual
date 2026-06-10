@@ -184,6 +184,39 @@ def select_image(
     return updated
 
 
+@router.post("/{card_id}/upload-image")
+def upload_image(
+    card_id: str,
+    file: UploadFile,
+    user: AuthUser = Depends(get_current_user),
+):
+    """Istemcide kirpilmis (veya ozel) gorseli dogrudan Storage'a yukler ve
+    kartin kalici image_url alanini gunceller (PRD: 'secip kirparak onaylar')."""
+    card = get_owned_row("flashcards", card_id, user.id)
+    content = file.file.read()
+    if not content:
+        raise HTTPException(400, "Bos dosya gonderildi.")
+    if len(content) > 8 * 1024 * 1024:
+        raise HTTPException(413, "Gorsel 8MB'tan kucuk olmali.")
+
+    storage_path = f"{user.id}/{card_id}.png"
+    storage = get_db().storage.from_(settings.STORAGE_BUCKET)
+    storage.upload(
+        storage_path,
+        content,
+        file_options={"content-type": file.content_type or "image/png", "upsert": "true"},
+    )
+    public_url = storage.get_public_url(storage_path)
+    return (
+        get_db()
+        .table("flashcards")
+        .update({"image_url": public_url})
+        .eq("id", card["id"])
+        .execute()
+        .data[0]
+    )
+
+
 @router.patch("/{card_id}")
 def update_card(
     card_id: str, req: CardUpdateReq, user: AuthUser = Depends(get_current_user)

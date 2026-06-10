@@ -14,7 +14,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$SetsState {
 
- ViewStatus get status; List<CardSet> get sets; String? get error; String? get notice;
+ ViewStatus get status; List<CardSet> get sets; bool get importing; String? get error; String? get notice;
 /// Create a copy of SetsState
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -25,16 +25,16 @@ $SetsStateCopyWith<SetsState> get copyWith => _$SetsStateCopyWithImpl<SetsState>
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is SetsState&&(identical(other.status, status) || other.status == status)&&const DeepCollectionEquality().equals(other.sets, sets)&&(identical(other.error, error) || other.error == error)&&(identical(other.notice, notice) || other.notice == notice));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is SetsState&&(identical(other.status, status) || other.status == status)&&const DeepCollectionEquality().equals(other.sets, sets)&&(identical(other.importing, importing) || other.importing == importing)&&(identical(other.error, error) || other.error == error)&&(identical(other.notice, notice) || other.notice == notice));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,status,const DeepCollectionEquality().hash(sets),error,notice);
+int get hashCode => Object.hash(runtimeType,status,const DeepCollectionEquality().hash(sets),importing,error,notice);
 
 @override
 String toString() {
-  return 'SetsState(status: $status, sets: $sets, error: $error, notice: $notice)';
+  return 'SetsState(status: $status, sets: $sets, importing: $importing, error: $error, notice: $notice)';
 }
 
 
@@ -45,7 +45,7 @@ abstract mixin class $SetsStateCopyWith<$Res>  {
   factory $SetsStateCopyWith(SetsState value, $Res Function(SetsState) _then) = _$SetsStateCopyWithImpl;
 @useResult
 $Res call({
- ViewStatus status, List<CardSet> sets, String? error, String? notice
+ ViewStatus status, List<CardSet> sets, bool importing, String? error, String? notice
 });
 
 
@@ -62,11 +62,12 @@ class _$SetsStateCopyWithImpl<$Res>
 
 /// Create a copy of SetsState
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? status = null,Object? sets = null,Object? error = freezed,Object? notice = freezed,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? status = null,Object? sets = null,Object? importing = null,Object? error = freezed,Object? notice = freezed,}) {
   return _then(_self.copyWith(
 status: null == status ? _self.status : status // ignore: cast_nullable_to_non_nullable
 as ViewStatus,sets: null == sets ? _self.sets : sets // ignore: cast_nullable_to_non_nullable
-as List<CardSet>,error: freezed == error ? _self.error : error // ignore: cast_nullable_to_non_nullable
+as List<CardSet>,importing: null == importing ? _self.importing : importing // ignore: cast_nullable_to_non_nullable
+as bool,error: freezed == error ? _self.error : error // ignore: cast_nullable_to_non_nullable
 as String?,notice: freezed == notice ? _self.notice : notice // ignore: cast_nullable_to_non_nullable
 as String?,
   ));
@@ -153,10 +154,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( ViewStatus status,  List<CardSet> sets,  String? error,  String? notice)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( ViewStatus status,  List<CardSet> sets,  bool importing,  String? error,  String? notice)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _SetsState() when $default != null:
-return $default(_that.status,_that.sets,_that.error,_that.notice);case _:
+return $default(_that.status,_that.sets,_that.importing,_that.error,_that.notice);case _:
   return orElse();
 
 }
@@ -174,10 +175,10 @@ return $default(_that.status,_that.sets,_that.error,_that.notice);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( ViewStatus status,  List<CardSet> sets,  String? error,  String? notice)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( ViewStatus status,  List<CardSet> sets,  bool importing,  String? error,  String? notice)  $default,) {final _that = this;
 switch (_that) {
 case _SetsState():
-return $default(_that.status,_that.sets,_that.error,_that.notice);case _:
+return $default(_that.status,_that.sets,_that.importing,_that.error,_that.notice);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -194,10 +195,10 @@ return $default(_that.status,_that.sets,_that.error,_that.notice);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( ViewStatus status,  List<CardSet> sets,  String? error,  String? notice)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( ViewStatus status,  List<CardSet> sets,  bool importing,  String? error,  String? notice)?  $default,) {final _that = this;
 switch (_that) {
 case _SetsState() when $default != null:
-return $default(_that.status,_that.sets,_that.error,_that.notice);case _:
+return $default(_that.status,_that.sets,_that.importing,_that.error,_that.notice);case _:
   return null;
 
 }
@@ -209,7 +210,7 @@ return $default(_that.status,_that.sets,_that.error,_that.notice);case _:
 
 
 class _SetsState implements SetsState {
-  const _SetsState({this.status = ViewStatus.initial, final  List<CardSet> sets = const <CardSet>[], this.error, this.notice}): _sets = sets;
+  const _SetsState({this.status = ViewStatus.initial, final  List<CardSet> sets = const <CardSet>[], this.importing = false, this.error, this.notice}): _sets = sets;
   
 
 @override@JsonKey() final  ViewStatus status;
@@ -220,6 +221,7 @@ class _SetsState implements SetsState {
   return EqualUnmodifiableListView(_sets);
 }
 
+@override@JsonKey() final  bool importing;
 @override final  String? error;
 @override final  String? notice;
 
@@ -233,16 +235,16 @@ _$SetsStateCopyWith<_SetsState> get copyWith => __$SetsStateCopyWithImpl<_SetsSt
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _SetsState&&(identical(other.status, status) || other.status == status)&&const DeepCollectionEquality().equals(other._sets, _sets)&&(identical(other.error, error) || other.error == error)&&(identical(other.notice, notice) || other.notice == notice));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _SetsState&&(identical(other.status, status) || other.status == status)&&const DeepCollectionEquality().equals(other._sets, _sets)&&(identical(other.importing, importing) || other.importing == importing)&&(identical(other.error, error) || other.error == error)&&(identical(other.notice, notice) || other.notice == notice));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,status,const DeepCollectionEquality().hash(_sets),error,notice);
+int get hashCode => Object.hash(runtimeType,status,const DeepCollectionEquality().hash(_sets),importing,error,notice);
 
 @override
 String toString() {
-  return 'SetsState(status: $status, sets: $sets, error: $error, notice: $notice)';
+  return 'SetsState(status: $status, sets: $sets, importing: $importing, error: $error, notice: $notice)';
 }
 
 
@@ -253,7 +255,7 @@ abstract mixin class _$SetsStateCopyWith<$Res> implements $SetsStateCopyWith<$Re
   factory _$SetsStateCopyWith(_SetsState value, $Res Function(_SetsState) _then) = __$SetsStateCopyWithImpl;
 @override @useResult
 $Res call({
- ViewStatus status, List<CardSet> sets, String? error, String? notice
+ ViewStatus status, List<CardSet> sets, bool importing, String? error, String? notice
 });
 
 
@@ -270,11 +272,12 @@ class __$SetsStateCopyWithImpl<$Res>
 
 /// Create a copy of SetsState
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? status = null,Object? sets = null,Object? error = freezed,Object? notice = freezed,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? status = null,Object? sets = null,Object? importing = null,Object? error = freezed,Object? notice = freezed,}) {
   return _then(_SetsState(
 status: null == status ? _self.status : status // ignore: cast_nullable_to_non_nullable
 as ViewStatus,sets: null == sets ? _self._sets : sets // ignore: cast_nullable_to_non_nullable
-as List<CardSet>,error: freezed == error ? _self.error : error // ignore: cast_nullable_to_non_nullable
+as List<CardSet>,importing: null == importing ? _self.importing : importing // ignore: cast_nullable_to_non_nullable
+as bool,error: freezed == error ? _self.error : error // ignore: cast_nullable_to_non_nullable
 as String?,notice: freezed == notice ? _self.notice : notice // ignore: cast_nullable_to_non_nullable
 as String?,
   ));

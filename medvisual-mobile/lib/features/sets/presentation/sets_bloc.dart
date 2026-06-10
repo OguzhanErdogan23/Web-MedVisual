@@ -33,11 +33,24 @@ final class SetRenameRequested extends SetsEvent {
   final String title;
 }
 
+final class SetImportRequested extends SetsEvent {
+  const SetImportRequested({
+    required this.filePath,
+    required this.filename,
+    this.setTitle,
+  });
+
+  final String filePath;
+  final String filename;
+  final String? setTitle;
+}
+
 @freezed
 abstract class SetsState with _$SetsState {
   const factory SetsState({
     @Default(ViewStatus.initial) ViewStatus status,
     @Default(<CardSet>[]) List<CardSet> sets,
+    @Default(false) bool importing,
     String? error,
     String? notice,
   }) = _SetsState;
@@ -50,6 +63,7 @@ class SetsBloc extends Bloc<SetsEvent, SetsState> {
     on<SetsRefreshed>((e, emit) => _load(emit, silent: true));
     on<SetDeleteRequested>(_onDelete);
     on<SetRenameRequested>(_onRename);
+    on<SetImportRequested>(_onImport);
   }
 
   final SetsRepository _repo;
@@ -78,6 +92,27 @@ class SetsBloc extends Bloc<SetsEvent, SetsState> {
       emit(state.copyWith(notice: null));
     } on ApiException catch (e) {
       emit(state.copyWith(notice: e.message));
+      emit(state.copyWith(notice: null));
+    }
+  }
+
+  Future<void> _onImport(
+      SetImportRequested event, Emitter<SetsState> emit) async {
+    emit(state.copyWith(importing: true));
+    try {
+      final created = await _repo.importCards(
+        filePath: event.filePath,
+        filename: event.filename,
+        setTitle: event.setTitle,
+      );
+      emit(state.copyWith(
+        importing: false,
+        notice: '${created.cardCount} kart içe aktarıldı.',
+      ));
+      emit(state.copyWith(notice: null));
+      await _load(emit, silent: true);
+    } on ApiException catch (e) {
+      emit(state.copyWith(importing: false, notice: e.message));
       emit(state.copyWith(notice: null));
     }
   }
