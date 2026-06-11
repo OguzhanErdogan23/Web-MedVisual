@@ -133,4 +133,33 @@ void main() {
       expect(projectedIntervalLabel(s, Grade.good), '1 gun');
     });
   });
+
+  // -------------------------------------------------------------------------
+  // Golden parite vektorleri: ayni girdiler backend tests/test_sm2.py'de de
+  // test edilir. Tablo degisirse IKI testi birden guncelleyin (bulgu C26).
+  // -------------------------------------------------------------------------
+  group('golden parite (backend ile birebir)', () {
+    final now = DateTime.utc(2026, 6, 11);
+
+    test('hard half-up: ef=1.3, interval=1.75 -> 1.37 gun', () {
+      const s = ReviewState(easeFactor: 1.3, intervalDays: 1.75, repetitions: 6);
+      final r = applySm2(s, Grade.hard, now);
+      expect(r.easeFactor, closeTo(1.3, 1e-9));
+      expect(r.intervalDays, closeTo(1.37, 1e-9));
+    });
+
+    test('good: ef=2.5, interval=6 -> 15 gun', () {
+      const s = ReviewState(easeFactor: 2.5, intervalDays: 6, repetitions: 2);
+      final r = applySm2(s, Grade.good, now);
+      expect(r.easeFactor, closeTo(2.5, 1e-9));
+      expect(r.intervalDays, closeTo(15.0, 1e-9));
+    });
+
+    test('easy: ef=2.21, interval=14.5 -> 33.49 gun', () {
+      const s = ReviewState(easeFactor: 2.21, intervalDays: 14.5, repetitions: 4);
+      final r = applySm2(s, Grade.easy, now);
+      expect(r.easeFactor, closeTo(2.31, 1e-9));
+      expect(r.intervalDays, closeTo(33.49, 1e-9));
+    });
+  });
 }

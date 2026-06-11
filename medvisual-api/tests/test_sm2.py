@@ -74,3 +74,24 @@ def test_input_state_is_not_mutated():
 def test_invalid_grade_raises():
     with pytest.raises(ValueError):
         apply_sm2(ReviewState(), grade=5, now=NOW)
+
+
+# ---------------------------------------------------------------------------
+# Golden parite vektorleri: ayni girdiler mobil sm2_test.dart'ta da test edilir.
+# Bu tablo degisirse IKI testi birden guncelleyin (denetim bulgusu C26).
+# ---------------------------------------------------------------------------
+GOLDEN = [
+    # (ef, interval, reps, grade) -> (beklenen_ef, beklenen_interval)
+    ((1.3, 1.75, 6, 1), (1.3, 1.37)),    # half-up: 2.275 -> 2.28 -> *0.6 -> 1.37
+    ((2.5, 6.0, 2, 2), (2.5, 15.0)),
+    ((2.21, 14.5, 4, 3), (2.31, 33.49)),
+]
+
+
+def test_golden_parity_vectors_match_dart():
+    for (ef, interval, reps, grade), (exp_ef, exp_interval) in GOLDEN:
+        s = ReviewState(ease_factor=ef, interval_days=interval,
+                        repetitions=reps, due_at=NOW)
+        r = apply_sm2(s, grade=grade, now=NOW)
+        assert r.ease_factor == pytest.approx(exp_ef, abs=1e-9)
+        assert r.interval_days == pytest.approx(exp_interval, abs=1e-9)

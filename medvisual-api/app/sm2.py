@@ -7,12 +7,24 @@ oldugu icin iki taraf birebir ayni sonucu uretir, yazma yalnizca buradan yapilir
 Grade olcegi (istemci butonlari): 0=again, 1=hard, 2=good, 3=easy
 Klasik SM-2 kalite esleme: again->2 (basarisiz), hard->3, good->4, easy->5
 """
+import math
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 
 GRADE_TO_QUALITY = {0: 2, 1: 3, 2: 4, 3: 5}
 AGAIN_RETRY_MINUTES = 10
 MIN_EASE = 1.3
+
+
+def _round2(value: float) -> float:
+    """Iki ondalik half-up yuvarlama — Dart istemcisiyle BIT DUZEYINDE ayni.
+
+    Python'un round() fonksiyonu half-even (banker's) yuvarlar; Dart
+    (v*100).roundToDouble()/100 ise half-away kullanir ve 2.275 gibi tam
+    yarim degerlerde farkli interval uretirdi (denetim bulgusu C26).
+    Pozitif degerlerde floor(x*100+0.5)/100, Dart davranisiyla ozdestir.
+    """
+    return math.floor(value * 100 + 0.5) / 100
 
 
 @dataclass(frozen=True)
@@ -49,10 +61,10 @@ def apply_sm2(state: ReviewState, grade: int, now: datetime) -> ReviewState:
     elif state.repetitions == 1:
         interval = 6.0
     else:
-        interval = round(state.interval_days * ef, 2)
+        interval = _round2(state.interval_days * ef)
     # "hard" dogru sayilir ama araligi kisaltir (Anki benzeri davranis)
     if grade == 1:
-        interval = max(1.0, round(interval * 0.6, 2))
+        interval = max(1.0, _round2(interval * 0.6))
 
     return ReviewState(
         ease_factor=ef,
