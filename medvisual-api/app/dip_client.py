@@ -58,13 +58,18 @@ def _get(path: str, **kwargs) -> dict:
         raise DipError(f"DIP motoruna ulasilamadi ({settings.DIP_ENGINE_URL}): {exc}")
 
 
+# Hizli uclarda 1800 sn'lik genel read timeout yerine kisa sure: DIP takilirsa
+# /health ve sozluk/kitap listeleri 30 dk bloklanmasin.
+_QUICK = httpx.Timeout(connect=5.0, read=10.0, write=10.0, pool=10.0)
+
+
 def health() -> dict:
-    return _get("/api/health")
+    return _get("/api/health", timeout=_QUICK)
 
 
 def terms() -> dict:
     """-> {terms: [...]} Latince sozluk."""
-    return _get("/api/terms")
+    return _get("/api/terms", timeout=_QUICK)
 
 
 def upload_pdf(filename: str, content: bytes) -> dict:
@@ -76,7 +81,7 @@ def upload_pdf(filename: str, content: bytes) -> dict:
 
 
 def list_books() -> dict:
-    return _get("/api/books")
+    return _get("/api/books", timeout=_QUICK)
 
 
 def load_book(name: str) -> dict:

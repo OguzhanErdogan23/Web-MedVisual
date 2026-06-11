@@ -244,7 +244,12 @@ def update_card(
     card_id: str, req: CardUpdateReq, user: AuthUser = Depends(get_current_user)
 ):
     get_owned_row("flashcards", card_id, user.id)
-    fields = {k: v for k, v in req.model_dump().items() if v is not None}
+    # exclude_unset: gonderilen null "alani temizle" demektir (orn. term: null);
+    # gonderilmeyen alanlar ise hic dokunulmaz.
+    fields = req.model_dump(exclude_unset=True)
+    for required in ("front", "back"):  # DB'de NOT NULL — null'a cekilemez
+        if fields.get(required) is None:
+            fields.pop(required, None)
     if not fields:
         return get_owned_row("flashcards", card_id, user.id)
     return (

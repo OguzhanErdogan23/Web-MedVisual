@@ -130,17 +130,21 @@ def enhance_cards(cards: List[dict], max_cards: int = 40) -> Tuple[Optional[List
         return None, None
     out = []
     for it in items:
-        if not isinstance(it, dict):
+        try:
+            if not isinstance(it, dict):
+                continue
+            front = str(it.get("front", "")).strip()
+            back = str(it.get("back", "")).strip()
+            if not front or not back:
+                continue
+            out.append({
+                "front": front, "back": back,
+                # `or ""`: JSON null'un str(None)="none" stringine donusmesini onler
+                "term": str(it.get("term") or "").strip().lower() or None,
+                "page": it.get("page"), "kind": "gemini",
+            })
+        except (TypeError, ValueError):
             continue
-        front = str(it.get("front", "")).strip()
-        back = str(it.get("back", "")).strip()
-        if not front or not back:
-            continue
-        out.append({
-            "front": front, "back": back,
-            "term": str(it.get("term", "")).strip().lower() or None,
-            "page": it.get("page"), "kind": "gemini",
-        })
     return (out or None), (model if out else None)
 
 
@@ -186,16 +190,21 @@ def enhance_quiz(questions: List[dict], n_questions: int = 10) -> Tuple[Optional
         return None, None
     out = []
     for it in items:
-        if not isinstance(it, dict):
+        # LLM tek soruda sapsa bile (null/"B" answer_index vb.) digerleri kurtulsun;
+        # istisna yukari kacarsa tum quiz isi 'failed' oluyor (offline'a dusulemiyor).
+        try:
+            if not isinstance(it, dict):
+                continue
+            q = str(it.get("question", "")).strip()
+            opts = it.get("options", [])
+            if not q or not isinstance(opts, list) or len(opts) < 2:
+                continue
+            opts = [str(o).strip() for o in opts][:4]
+            if len(set(opts)) < len(opts):  # mukerrer sik -> bu soruyu at
+                continue
+            ai = int(it.get("answer_index", 0))
+            ai = ai if 0 <= ai < len(opts) else 0
+            out.append({"question": q, "options": opts, "answer_index": ai})
+        except (TypeError, ValueError):
             continue
-        q = str(it.get("question", "")).strip()
-        opts = it.get("options", [])
-        if not q or not isinstance(opts, list) or len(opts) < 2:
-            continue
-        opts = [str(o).strip() for o in opts][:4]
-        if len(set(opts)) < len(opts):  # mukerrer sik -> bu soruyu at
-            continue
-        ai = int(it.get("answer_index", 0))
-        ai = ai if 0 <= ai < len(opts) else 0
-        out.append({"question": q, "options": opts, "answer_index": ai})
     return (out or None), (model if out else None)

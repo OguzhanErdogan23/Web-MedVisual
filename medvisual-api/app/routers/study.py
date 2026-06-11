@@ -29,10 +29,13 @@ def _parse_ts(value: str) -> datetime:
 def due_cards(
     set_id: Optional[str] = Query(None),
     limit: int = Query(50, ge=1, le=200),
+    mode: str = Query("due", description="due | cram (cram: vade filtresi yok)"),
     user: AuthUser = Depends(get_current_user),
 ):
     """Vadesi gelmis kartlar: hic calisilmamis olanlar + due_at <= simdi.
-    Hic calisilmamis kartlar one alinir (yeni kart onceligi)."""
+    Hic calisilmamis kartlar one alinir (yeni kart onceligi).
+    mode=cram: TUM kartlar vade durumuna bakilmadan doner (serbest calisma;
+    istemci karistirir, notlar sunucuya YAZILMAZ)."""
     if set_id:
         get_owned_row("flashcard_sets", set_id, user.id)
     q = (
@@ -43,7 +46,8 @@ def due_cards(
     )
     if set_id:
         q = q.eq("set_id", set_id)
-    rows = q.order("position").execute().data
+    # PostgREST varsayilan 1000 satir tavanini asabilmek icin acik limit
+    rows = q.order("position").limit(5000).execute().data
 
     now = _now()
     fresh, due = [], []
@@ -52,7 +56,9 @@ def due_cards(
         raw = card.pop("card_reviews", None)
         review = (raw[0] if raw else None) if isinstance(raw, list) else raw
         card["review"] = review
-        if review is None:
+        if mode == "cram":
+            fresh.append(card)
+        elif review is None:
             fresh.append(card)
         elif _parse_ts(review["due_at"]) <= now:
             due.append(card)
@@ -61,7 +67,7 @@ def due_cards(
     return {
         "cards": result,
         "total_due": len(fresh) + len(due),
-        "new_count": len(fresh),
+        "new_count": 0 if mode == "cram" else len(fresh),
     }
 
 
@@ -113,9 +119,18 @@ def submit_review(req: ReviewReq, user: AuthUser = Depends(get_current_user)):
 
 
 @router.get("/history")
-def study_history(days: int = 14, user: AuthUser = Depends(get_current_user)):
-    """Son N gunun gunluk calisma ozeti (ilerleme grafikleri icin)."""
+def study_history(
+    days: int = Query(14, ge=1, le=366),
+    tz_offset_minutes: int = Query(0, ge=-840, le=840,
+                                   description="Istemci yerel saat farki (dk), orn. TR=180"),
+    user: AuthUser = Depends(get_current_user),
+):
+    """Son N gunun gunluk calisma ozeti (ilerleme grafigi / isi haritasi).
+
+    Gun siniri istemcinin yerel saatine gore cizilir (tz_offset_minutes);
+    aksi halde TR'de 21:00 sonrasi cevaplar ertesi gune yazilirdi."""
     from collections import defaultdict
+    from datetime import timedelta
 
     try:
         rows = (
@@ -124,24 +139,27 @@ def study_history(days: int = 14, user: AuthUser = Depends(get_current_user)):
             .select("grade, reviewed_at")
             .eq("user_id", user.id)
             .order("reviewed_at", desc=True)
-            .limit(2000)
+            .limit(5000)
             .execute()
             .data
         )
     except Exception:
         # review_events tablosu (migration_02) henuz uygulanmadiysa bos don.
         return {"days": [], "total_reviews": 0, "needs_migration": True}
+    offset = timedelta(minutes=tz_offset_minutes)
     by_day = defaultdict(lambda: {"total": 0, "correct": 0})
     for r in rows:
-        day = r["reviewed_at"][:10]
-        by_day[day]["total"] += 1
-        if r["grade"] >= 2:  # Iyi/Kolay = dogru
-            by_day[day]["correct"] += 1
+        local_day = (_parse_ts(r["reviewed_at"]) + offset).date().isoformat()
+        by_day[local_day]["total"] += 1
+        # SM-2 ile tutarli basari tanimi: hard (1) de dogru sayilir (sm2.py:53)
+        if r["grade"] >= 1:
+            by_day[local_day]["correct"] += 1
     series = [
         {"date": d, "total": v["total"], "correct": v["correct"]}
         for d, v in sorted(by_day.items())
     ][-days:]
-    return {"days": series, "total_reviews": len(rows)}
+    # total_reviews pencereyle uyumlu (eski hali tum zamanlari sayiyordu)
+    return {"days": series, "total_reviews": sum(d["total"] for d in series)}
 
 
 @router.get("/stats")
@@ -163,6 +181,7 @@ def study_stats(user: AuthUser = Depends(get_current_user)):
         db.table("card_reviews")
         .select("due_at")
         .eq("user_id", user.id)
+        .limit(5000)  # PostgREST varsayilan 1000 tavanini asabilmek icin
         .execute()
         .data
     )

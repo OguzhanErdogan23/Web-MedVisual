@@ -53,9 +53,13 @@ def _generate_cards_job(
             raise DipError(res.get("reason") or "Bu aralikta kart uretilemedi.")
 
         # Backend Gemini model-fallback zinciri ile iyilestir (istenirse).
+        # Zenginlestirme hatasi tum isi dusurmesin: offline kartlarla devam edilir.
         used = "offline"
         if req.enhance and gemini.is_available():
-            enhanced, model = gemini.enhance_cards(cards, req.max_cards)
+            try:
+                enhanced, model = gemini.enhance_cards(cards, req.max_cards)
+            except Exception:
+                enhanced, model = None, None
             if enhanced:
                 cards = enhanced
                 used = model
@@ -102,9 +106,13 @@ def _generate_quiz_job(
             )
 
         # Backend Gemini zinciri ile iyilestir (mukerrer sikleri eler, klinik yapar).
+        # Zenginlestirme hatasi tum isi dusurmesin: offline sorularla devam edilir.
         used = "offline"
         if req.enhance and gemini.is_available():
-            enhanced, model = gemini.enhance_quiz(questions, req.n_questions)
+            try:
+                enhanced, model = gemini.enhance_quiz(questions, req.n_questions)
+            except Exception:
+                enhanced, model = None, None
             if enhanced:
                 questions = enhanced
                 used = model

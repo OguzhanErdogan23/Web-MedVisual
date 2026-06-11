@@ -35,6 +35,8 @@ app.add_middleware(
     allow_origins=["*"],
     allow_methods=["*"],
     allow_headers=["*"],
+    # Export dosya adinin (filename*=UTF-8'') JS tarafindan okunabilmesi icin
+    expose_headers=["Content-Disposition"],
 )
 
 app.include_router(documents.router)

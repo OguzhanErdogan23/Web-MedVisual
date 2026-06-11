@@ -17,6 +17,38 @@ import httpx
 _ANKI_MODEL_ID = 1607392319
 _ANKI_DECK_ID = 2059400110
 
+# Turkce (ğ/ş/ı/İ) destekli TTF adaylari: (normal, kalin, italik).
+# fpdf cekirdek fontlari latin-1 oldugu icin bu harfleri '?' yapar.
+_FONT_CANDIDATES = [
+    (r"C:\Windows\Fonts\arial.ttf", r"C:\Windows\Fonts\arialbd.ttf", r"C:\Windows\Fonts\ariali.ttf"),
+    (r"C:\Windows\Fonts\segoeui.ttf", r"C:\Windows\Fonts\segoeuib.ttf", r"C:\Windows\Fonts\segoeuii.ttf"),
+    (r"C:\Windows\Fonts\tahoma.ttf", r"C:\Windows\Fonts\tahomabd.ttf", r"C:\Windows\Fonts\tahoma.ttf"),
+    ("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf",
+     "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf",
+     "/usr/share/fonts/truetype/dejavu/DejaVuSans-Oblique.ttf"),
+]
+
+
+def _setup_font(pdf) -> str:
+    """Unicode TTF bulup kaydeder ve aile adini dondurur.
+
+    Bulunamazsa cekirdek Helvetica'ya duser (latin-1 sadelestirmeli);
+    pdf._uni_font bayragi _fit'in donusum karari icin kullanilir.
+    """
+    for regular, bold, italic in _FONT_CANDIDATES:
+        if not os.path.exists(regular):
+            continue
+        try:
+            pdf.add_font("AppFont", "", regular)
+            pdf.add_font("AppFont", "B", bold if os.path.exists(bold) else regular)
+            pdf.add_font("AppFont", "I", italic if os.path.exists(italic) else regular)
+            pdf._uni_font = True
+            return "AppFont"
+        except Exception:
+            continue
+    pdf._uni_font = False
+    return "Helvetica"
+
 
 def _img_bytes(url: Optional[str]) -> Optional[bytes]:
     if not url:
@@ -67,11 +99,11 @@ def cards_to_anki_tsv(cards: List[dict]) -> Tuple[bytes, str, str]:
     """Anki'nin 'Import' ile dogrudan okudugu sade TSV (on<TAB>arka, gorsel <img>)."""
     lines = []
     for c in cards:
-        back = c.get("back", "")
+        back = c.get("back") or ""
         if c.get("image_url"):
             back = f'{back}<br><img src="{c["image_url"]}">'
-        front = (c.get("front", "") or "").replace("\t", " ").replace("\n", " ")
-        back = back.replace("\t", " ").replace("\n", " ")
+        front = (c.get("front") or "").replace("\t", " ").replace("\n", " ").replace("\r", " ")
+        back = back.replace("\t", " ").replace("\n", " ").replace("\r", " ")
         lines.append(f"{front}\t{back}")
     return ("\n".join(lines)).encode("utf-8"), "text/tab-separated-values", "tsv"
 
@@ -95,16 +127,17 @@ def cards_to_pdf(cards: List[dict], title: str = "MedVisual Kartlar") -> Tuple[b
     pdf.set_margins(15, 15, 15)
     pdf.set_auto_page_break(auto=True, margin=15)
     pdf.add_page()
-    pdf.set_font("Helvetica", "B", 16)
+    family = _setup_font(pdf)
+    pdf.set_font(family, "B", 16)
     _mc(pdf, 10, title)
     pdf.ln(2)
 
     for i, c in enumerate(cards, 1):
         if pdf.get_y() > 250:
             pdf.add_page()
-        pdf.set_font("Helvetica", "B", 12)
+        pdf.set_font(family, "B", 12)
         _mc(pdf, 7, f"{i}. {c.get('front', '')}")
-        pdf.set_font("Helvetica", "", 11)
+        pdf.set_font(family, "", 11)
         pdf.set_text_color(60, 60, 60)
         _mc(pdf, 6, c.get("back", ""))
         pdf.set_text_color(0, 0, 0)
@@ -115,7 +148,7 @@ def cards_to_pdf(cards: List[dict], title: str = "MedVisual Kartlar") -> Tuple[b
             except Exception:
                 pass
         if c.get("term"):
-            pdf.set_font("Helvetica", "I", 9)
+            pdf.set_font(family, "I", 9)
             pdf.set_text_color(120, 120, 120)
             _mc(pdf, 5, f"{c['term']} - sayfa {c.get('page', '-')}")
             pdf.set_text_color(0, 0, 0)
@@ -140,26 +173,28 @@ def cards_to_apkg(cards: List[dict], deck_name: str = "MedVisual") -> Tuple[byte
     )
     deck = genanki.Deck(_ANKI_DECK_ID, deck_name)
     media_files: List[str] = []
-    tmpdir = tempfile.mkdtemp(prefix="medvisual_apkg_")
+    # Medya adi karta ozgu: iki ayri destenin exportu Anki medya koleksiyonunda
+    # birbirinin uzerine yazmasin (eski hali tum exportlarda medvisual_{idx}.png idi)
+    with tempfile.TemporaryDirectory(prefix="medvisual_apkg_") as tmpdir:
+        for idx, c in enumerate(cards):
+            back = c.get("back") or ""
+            img = _img_bytes(c.get("image_url"))
+            if img:
+                uniq = str(c.get("id") or idx).replace("-", "")[:12]
+                fname = f"medvisual_{uniq}_{idx}.png"
+                fpath = os.path.join(tmpdir, fname)
+                with open(fpath, "wb") as f:
+                    f.write(img)
+                media_files.append(fpath)
+                back = f'{back}<br><img src="{fname}">'
+            deck.add_note(genanki.Note(model=model, fields=[c.get("front") or "", back]))
 
-    for idx, c in enumerate(cards):
-        back = c.get("back", "")
-        img = _img_bytes(c.get("image_url"))
-        if img:
-            fname = f"medvisual_{idx}.png"
-            fpath = os.path.join(tmpdir, fname)
-            with open(fpath, "wb") as f:
-                f.write(img)
-            media_files.append(fpath)
-            back = f'{back}<br><img src="{fname}">'
-        deck.add_note(genanki.Note(model=model, fields=[c.get("front", ""), back]))
-
-    pkg = genanki.Package(deck)
-    pkg.media_files = media_files
-    out_path = os.path.join(tmpdir, "deck.apkg")
-    pkg.write_to_file(out_path)
-    with open(out_path, "rb") as f:
-        data = f.read()
+        pkg = genanki.Package(deck)
+        pkg.media_files = media_files
+        out_path = os.path.join(tmpdir, "deck.apkg")
+        pkg.write_to_file(out_path)
+        with open(out_path, "rb") as f:
+            data = f.read()
     return data, "application/octet-stream", "apkg"
 
 
@@ -208,23 +243,24 @@ def quiz_to_pdf(questions: List[dict], title: str = "MedVisual Quiz") -> Tuple[b
     pdf.set_margins(15, 15, 15)
     pdf.set_auto_page_break(auto=True, margin=15)
     pdf.add_page()
-    pdf.set_font("Helvetica", "B", 16)
+    family = _setup_font(pdf)
+    pdf.set_font(family, "B", 16)
     _mc(pdf, 10, title)
     pdf.ln(2)
     for i, q in enumerate(questions, 1):
         if pdf.get_y() > 250:
             pdf.add_page()
-        pdf.set_font("Helvetica", "B", 12)
+        pdf.set_font(family, "B", 12)
         _mc(pdf, 7, f"{i}. {q.get('question', '')}")
-        pdf.set_font("Helvetica", "", 11)
+        pdf.set_font(family, "", 11)
         for j, o in enumerate(q.get("options", [])):
             correct = j == q.get("answer_index", 0)
             if correct:
                 pdf.set_text_color(20, 130, 60)
-                pdf.set_font("Helvetica", "B", 11)
+                pdf.set_font(family, "B", 11)
             _mc(pdf, 6, f"   {chr(65 + j)}) {o}")
             pdf.set_text_color(0, 0, 0)
-            pdf.set_font("Helvetica", "", 11)
+            pdf.set_font(family, "", 11)
         pdf.ln(3)
     return bytes(pdf.output()), "application/pdf", "pdf"
 
@@ -240,18 +276,6 @@ def _latin1(text: str) -> str:
     return text.encode("latin-1", "replace").decode("latin-1")
 
 
-def _break_long_tokens(text: str, limit: int) -> str:
-    """30+ karakterlik bosluksuz token'lara kirilabilir bosluk ekler — yoksa
-    multi_cell satira sigdiramayip hata/donguye girer (bozuk OCR metinlerinde)."""
-    out = []
-    for token in text.split(" "):
-        while len(token) > limit:
-            out.append(token[:limit])
-            token = token[limit:]
-        out.append(token)
-    return " ".join(out)
-
-
 def _mc(pdf, height: float, text: str) -> None:
     """Guvenli multi_cell: x'i sol kenara sifirlar, tam sayfa genisligi kullanir,
     metni font genisligine gore parcalar. fpdf'nin genislik/x belirsizligini onler."""
@@ -260,10 +284,13 @@ def _mc(pdf, height: float, text: str) -> None:
 
 
 def _fit(pdf, text: str) -> str:
-    """Latin-1'e indir + her token'i sayfa genisligine sigacak sekilde parcala.
-    Genislik gercek font olcumuyle (get_string_width) hesaplanir — fpdf'nin
-    'tek karakter sigmiyor' hatasini tamamen onler."""
-    text = _latin1(text)
+    """Unicode font yoksa latin-1'e indir + her token'i sayfa genisligine
+    sigacak sekilde parcala. Genislik gercek font olcumuyle (get_string_width)
+    hesaplanir — fpdf'nin 'tek karakter sigmiyor' hatasini tamamen onler."""
+    if not getattr(pdf, "_uni_font", False):
+        text = _latin1(text)
+    elif text is None:
+        text = ""
     max_w = pdf.epw - 1  # etkin sayfa genisligi (mm)
     out = []
     for token in text.split(" "):

@@ -71,7 +71,10 @@ def update_set(
     set_id: str, req: SetUpdateReq, user: AuthUser = Depends(get_current_user)
 ):
     get_owned_row("flashcard_sets", set_id, user.id)
-    fields = {k: v for k, v in req.model_dump().items() if v is not None}
+    # exclude_unset: gonderilen null "alani temizle", gonderilmeyen alan dokunulmaz
+    fields = req.model_dump(exclude_unset=True)
+    if fields.get("title") is None:  # DB'de NOT NULL — null'a cekilemez
+        fields.pop("title", None)
     if not fields:
         return get_owned_row("flashcard_sets", set_id, user.id)
     return (
@@ -129,49 +132,59 @@ def export_set(
 def _auto_images_job(set_id: str, user_id: str, dip_doc_id: str, page_count: int,
                      page_range: str) -> None:
     db = get_db()
-    cards = (
-        db.table("flashcards")
-        .select("*")
-        .eq("set_id", set_id)
-        .is_("image_url", "null")
-        .order("position")
-        .execute()
-        .data
-    )
-    added = 0
-    for c in cards:
-        page = c.get("page")
-        if page:
-            rng = f"{max(1, page - 4)}-{min(page_count, page + 4)}"
-        else:
-            rng = page_range
-        try:
-            res = dip_client.match_card(
-                dip_doc_id, rng, front=c.get("front", ""),
-                back=c.get("back", ""), term=c.get("term") or "",
-            )
-        except DipError:
-            continue
-        cands = res.get("candidates") or []
-        if not cands:
-            continue
-        url = cands[0].get("url", "")
-        prefix = f"/work/{dip_doc_id}/"
-        subpath = url.split(prefix, 1)[1] if prefix in url else url.lstrip("/")
-        try:
-            content, _ = dip_client.fetch_work_file(dip_doc_id, subpath)
-        except DipError:
-            continue
-        storage_path = f"{user_id}/{c['id']}.png"
-        storage = db.storage.from_("card-images")
-        storage.upload(storage_path, content,
-                       file_options={"content-type": "image/png", "upsert": "true"})
-        public_url = storage.get_public_url(storage_path)
-        db.table("flashcards").update({"image_url": public_url}).eq("id", c["id"]).execute()
-        added += 1
-    db.table("flashcard_sets").update(
-        {"status": "ready", "description": f"{added} karta otomatik gorsel eklendi"}
-    ).eq("id", set_id).execute()
+    try:
+        cards = (
+            db.table("flashcards")
+            .select("*")
+            .eq("set_id", set_id)
+            .is_("image_url", "null")
+            .order("position")
+            .execute()
+            .data
+        )
+        added = 0
+        for c in cards:
+            page = c.get("page")
+            if page:
+                rng = f"{max(1, page - 4)}-{min(page_count, page + 4)}"
+            else:
+                rng = page_range
+            try:
+                res = dip_client.match_card(
+                    dip_doc_id, rng, front=c.get("front", ""),
+                    back=c.get("back", ""), term=c.get("term") or "",
+                )
+            except DipError:
+                continue
+            cands = res.get("candidates") or []
+            if not cands:
+                continue
+            url = cands[0].get("url", "")
+            prefix = f"/work/{dip_doc_id}/"
+            subpath = url.split(prefix, 1)[1] if prefix in url else url.lstrip("/")
+            try:
+                content, _ = dip_client.fetch_work_file(dip_doc_id, subpath)
+            except DipError:
+                continue
+            # Storage/DB hatasi tek karti atlasin, tum isi dusurmesin
+            try:
+                storage_path = f"{user_id}/{c['id']}.png"
+                storage = db.storage.from_("card-images")
+                storage.upload(storage_path, content,
+                               file_options={"content-type": "image/png", "upsert": "true"})
+                public_url = storage.get_public_url(storage_path)
+                db.table("flashcards").update({"image_url": public_url}).eq("id", c["id"]).execute()
+            except Exception:
+                continue
+            added += 1
+        db.table("flashcard_sets").update(
+            {"status": "ready", "description": f"{added} karta otomatik gorsel eklendi"}
+        ).eq("id", set_id).execute()
+    except Exception as exc:
+        # Beklenmedik hata seti 'generating'de birakmasin (istemciler sonsuz poll'lar)
+        db.table("flashcard_sets").update(
+            {"status": "failed", "error": str(exc)}
+        ).eq("id", set_id).execute()
 
 
 @router.post("/{set_id}/auto-images", status_code=202)
@@ -205,14 +218,17 @@ def add_card(
 ):
     get_owned_row("flashcard_sets", set_id, user.id)
     db = get_db()
-    count = (
+    # max(position)+1: silme sonrasi count ile pozisyon cakismasini onler
+    last = (
         db.table("flashcards")
-        .select("id", count="exact")
+        .select("position")
         .eq("set_id", set_id)
+        .order("position", desc=True)
+        .limit(1)
         .execute()
-        .count
-        or 0
+        .data
     )
+    next_pos = (last[0]["position"] + 1) if last and last[0].get("position") is not None else 0
     return (
         db.table("flashcards")
         .insert(
@@ -224,7 +240,7 @@ def add_card(
                 "term": req.term,
                 "kind": req.kind,
                 "page": req.page,
-                "position": count,
+                "position": next_pos,
             }
         )
         .execute()
