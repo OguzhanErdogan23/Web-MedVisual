@@ -75,7 +75,7 @@ export default function Quizzes() {
             <div key={i} className="h-32 animate-pulse rounded-2xl bg-slate-200/60" />
           ))}
         </div>
-      ) : quizzesQuery.isError ? (
+      ) : quizzesQuery.isError && quizzes.length === 0 ? (
         <div className="rounded-xl border border-red-200 bg-red-50 px-5 py-4 text-sm text-red-700 dark:border-red-900 dark:bg-red-950/40 dark:text-red-300">
           Quizler yüklenemedi: {(quizzesQuery.error as Error).message}
           <button

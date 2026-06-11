@@ -214,7 +214,7 @@ export default function Dashboard() {
               <div key={i} className="h-16 animate-pulse rounded-xl bg-slate-200/60" />
             ))}
           </div>
-        ) : docsQuery.isError ? (
+        ) : docsQuery.isError && documents.length === 0 ? (
           <div className="rounded-xl border border-red-200 bg-red-50 px-5 py-4 text-sm text-red-700 dark:border-red-900 dark:bg-red-950/40 dark:text-red-300">
             Dokümanlar yüklenemedi: {(docsQuery.error as Error).message}
             <button

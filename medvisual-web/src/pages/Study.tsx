@@ -127,8 +127,9 @@ export default function Study() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [done, review.isPending])
 
-  // Hata durumu spinner'dan ÖNCE: aksi halde queue hiç dolmaz ve sonsuz spinner olur
-  if (dueQuery.isError) {
+  // Hata durumu spinner'dan ÖNCE: aksi halde queue hiç dolmaz ve sonsuz spinner
+  // olur. Önbellekte (persist) veri varsa oturum yine de başlatılır.
+  if (dueQuery.isError && !dueQuery.data) {
     return (
       <div className="mx-auto max-w-2xl space-y-4">
         <div className="rounded-xl border border-red-200 bg-red-50 px-5 py-4 text-sm text-red-700 dark:border-red-900 dark:bg-red-950/40 dark:text-red-300">
