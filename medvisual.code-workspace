@@ -1,0 +1,43 @@
+{
+  // MedVisual kaynak kodu INCELEME calisma alani.
+  // Tum dosyalar SALT OKUNUR acilir (files.readonlyInclude) — yanlislikla
+  // degisiklik yapilamaz. Uretilmis dosyalar ve bagimliliklar gizlidir.
+  "folders": [
+    { "name": "1) API — FastAPI (Python)", "path": "medvisual-api" },
+    { "name": "2) Web — React (TypeScript)", "path": "medvisual-web" },
+    { "name": "3) Mobil — Flutter (Dart)", "path": "medvisual-mobile" },
+    { "name": "4) DIP — Görüntü İşleme (Python)", "path": "medvisual-dip/medvisual-dip" }
+  ],
+  "settings": {
+    "files.readonlyInclude": { "**/*": true },
+    "files.exclude": {
+      "**/.venv": true,
+      "**/venv": true,
+      "**/node_modules": true,
+      "**/build": true,
+      "**/dist": true,
+      "**/.dart_tool": true,
+      "**/__pycache__": true,
+      "**/.pytest_cache": true,
+      "**/.idea": true,
+      "**/*.freezed.dart": true,
+      "**/*.g.dart": true,
+      "**/android": true,
+      "**/ios": true,
+      "**/windows": true,
+      "**/linux": true,
+      "**/macos": true,
+      "**/web/icons": true,
+      "**/work": true,
+      "**/*.iml": true
+    },
+    "search.exclude": {
+      "**/.venv": true,
+      "**/venv": true,
+      "**/node_modules": true,
+      "**/build": true
+    },
+    "workbench.startupEditor": "none",
+    "git.openRepositoryInParentFolders": "never"
+  }
+}
