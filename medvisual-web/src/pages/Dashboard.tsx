@@ -9,6 +9,7 @@ import Modal from '../components/Modal'
 import Spinner from '../components/Spinner'
 import EmptyState from '../components/EmptyState'
 import ConfirmDialog from '../components/ConfirmDialog'
+import StudyHeatmap from '../components/StudyHeatmap'
 import type {
   BooksResponse,
   DocumentRow,
@@ -124,7 +125,11 @@ export default function Dashboard() {
 
   const historyQuery = useQuery({
     queryKey: ['study-history'],
-    queryFn: () => api.get<StudyHistoryResponse>('/study/history?days=14'),
+    // tz_offset_minutes: gün sınırı kullanıcının yerel saatine göre (TR: 180)
+    queryFn: () =>
+      api.get<StudyHistoryResponse>(
+        `/study/history?days=14&tz_offset_minutes=${-new Date().getTimezoneOffset()}`,
+      ),
   })
 
   const docsQuery = useQuery({
@@ -185,6 +190,9 @@ export default function Dashboard() {
       {/* Çalışma ilerlemesi */}
       {historyQuery.data && <StudyProgress data={historyQuery.data} />}
 
+      {/* Çalışma takvimi (ısı haritası + seri) */}
+      <StudyHeatmap />
+
       {/* Yükleme */}
       <UploadDropzone />
 
@@ -205,6 +213,16 @@ export default function Dashboard() {
             {[1, 2, 3].map((i) => (
               <div key={i} className="h-16 animate-pulse rounded-xl bg-slate-200/60" />
             ))}
+          </div>
+        ) : docsQuery.isError ? (
+          <div className="rounded-xl border border-red-200 bg-red-50 px-5 py-4 text-sm text-red-700 dark:border-red-900 dark:bg-red-950/40 dark:text-red-300">
+            Dokümanlar yüklenemedi: {(docsQuery.error as Error).message}
+            <button
+              onClick={() => docsQuery.refetch()}
+              className="ml-3 rounded-lg bg-red-600 px-3 py-1 text-xs font-medium text-white hover:bg-red-700"
+            >
+              Tekrar dene
+            </button>
           </div>
         ) : documents.length === 0 ? (
           <EmptyState

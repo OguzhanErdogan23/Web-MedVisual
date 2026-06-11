@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { api } from '../lib/api'
@@ -18,6 +18,13 @@ export default function QuizPlayer() {
   const [index, setIndex] = useState(0)
   const [answers, setAnswers] = useState<number[]>([])
   const [selected, setSelected] = useState<number | null>(null)
+
+  // Aynı route'ta quiz id değişirse (geri/ileri gezinme) oyun durumunu sıfırla
+  useEffect(() => {
+    setIndex(0)
+    setAnswers([])
+    setSelected(null)
+  }, [id])
 
   const quizQuery = useQuery({
     queryKey: ['quiz', id],

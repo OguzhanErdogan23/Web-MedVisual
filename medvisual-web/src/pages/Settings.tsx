@@ -38,6 +38,7 @@ export default function Settings() {
   const updateProfile = useUpdateProfile()
 
   const [displayName, setDisplayName] = useState('')
+  const [nameDirty, setNameDirty] = useState(false)
   const [confirmSignOut, setConfirmSignOut] = useState(false)
 
   // Şifre değiştirme
@@ -45,12 +46,12 @@ export default function Settings() {
   const [repeatPassword, setRepeatPassword] = useState('')
   const [savingPassword, setSavingPassword] = useState(false)
 
-  // Profil yüklendiğinde adı doldur
+  // Profil yüklendiğinde adı doldur — kullanıcı yazmaya başladıysa ezme
   useEffect(() => {
-    if (profileQuery.data) {
+    if (profileQuery.data && !nameDirty) {
       setDisplayName(profileQuery.data.display_name ?? '')
     }
-  }, [profileQuery.data])
+  }, [profileQuery.data, nameDirty])
 
   const email = profileQuery.data?.email ?? session?.user.email ?? ''
 
@@ -130,7 +131,10 @@ export default function Settings() {
               <input
                 type="text"
                 value={displayName}
-                onChange={(e) => setDisplayName(e.target.value)}
+                onChange={(e) => {
+                  setDisplayName(e.target.value)
+                  setNameDirty(true)
+                }}
                 placeholder="Adınızı girin"
                 className={inputClass}
               />

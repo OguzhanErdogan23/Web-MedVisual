@@ -8,7 +8,16 @@ import StatusBadge from '../components/StatusBadge'
 import Spinner from '../components/Spinner'
 import type { DocumentRow, QuizRow, SetRow } from '../types'
 
-const RANGE_RE = /^\d+(-\d+)?$/
+/** "n" veya "a-b" biçimi; başlangıç<=bitiş ve sayfa sınırı kontrolü ile. */
+function isValidRange(value: string, pageCount: number | null): boolean {
+  const m = /^(\d+)(?:-(\d+))?$/.exec(value.trim())
+  if (!m) return false
+  const start = Number(m[1])
+  const end = m[2] ? Number(m[2]) : start
+  if (start < 1 || end < start) return false
+  if (pageCount && end > pageCount) return false
+  return true
+}
 
 type Tab = 'cards' | 'quiz'
 
@@ -66,7 +75,7 @@ export default function DocumentDetail() {
   })
 
   const doc = docQuery.data
-  const rangeValid = RANGE_RE.test(range.trim())
+  const rangeValid = isValidRange(range, doc?.page_count ?? null)
   const pending = generateCards.isPending || generateQuiz.isPending
 
   const handleSubmit = (e: FormEvent) => {
@@ -158,7 +167,8 @@ export default function DocumentDetail() {
             />
             {range.length > 0 && !rangeValid && (
               <p className="mt-1 text-xs text-red-600">
-                "25-50" biçiminde bir aralık veya tek sayfa numarası girin.
+                "25-50" biçiminde bir aralık veya tek sayfa girin (başlangıç ≤ bitiş,
+                en çok {doc.page_count ?? '?'}. sayfa).
               </p>
             )}
           </div>
@@ -172,9 +182,9 @@ export default function DocumentDetail() {
                 <input
                   type="number"
                   min={1}
-                  max={200}
+                  max={120}
                   value={maxCards}
-                  onChange={(e) => setMaxCards(Number(e.target.value))}
+                  onChange={(e) => setMaxCards(Math.min(120, Math.max(1, Number(e.target.value) || 1)))}
                   className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none dark:border-slate-600 dark:bg-slate-900 dark:text-slate-100"
                 />
               </div>
@@ -186,9 +196,9 @@ export default function DocumentDetail() {
                 <input
                   type="number"
                   min={1}
-                  max={50}
+                  max={40}
                   value={nQuestions}
-                  onChange={(e) => setNQuestions(Number(e.target.value))}
+                  onChange={(e) => setNQuestions(Math.min(40, Math.max(1, Number(e.target.value) || 1)))}
                   className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none dark:border-slate-600 dark:bg-slate-900 dark:text-slate-100"
                 />
               </div>

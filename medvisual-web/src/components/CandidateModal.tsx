@@ -3,6 +3,7 @@ import type { CSSProperties, PointerEvent as ReactPointerEvent } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import Modal from './Modal'
 import Spinner from './Spinner'
+import AuthImage from './AuthImage'
 import { api, API_URL, getAccessToken } from '../lib/api'
 import { useToast } from '../hooks/useToast'
 import type {
@@ -235,22 +236,57 @@ export default function CandidateModal({
 }: CandidateModalProps) {
   const queryClient = useQueryClient()
   const { toast } = useToast()
-  const [token, setToken] = useState<string | null>(null)
   const [docId, setDocId] = useState<string | null>(documentId)
   const [range, setRange] = useState('')
+  const [rangeDirty, setRangeDirty] = useState(false)
   const [selected, setSelected] = useState<MatchCandidate | null>(null)
+  const [selectedBlob, setSelectedBlob] = useState<Blob | null>(null)
+  const [selectedSrc, setSelectedSrc] = useState<string | null>(null)
   const [result, setResult] = useState<MatchResponse | null>(null)
   const [step, setStep] = useState<'search' | 'confirm' | 'crop'>('search')
 
   useEffect(() => {
     if (open) {
-      getAccessToken().then(setToken)
       setSelected(null)
       setResult(null)
       setDocId(documentId)
       setStep('search')
+      setRangeDirty(false)
     }
   }, [open, documentId])
+
+  // Seçilen adayı Authorization başlıklı fetch ile indir (token URL'e sızmaz,
+  // kırpma da aynı blob'u kullanır)
+  useEffect(() => {
+    if (!selected) {
+      setSelectedBlob(null)
+      setSelectedSrc(null)
+      return
+    }
+    let cancelled = false
+    let url: string | null = null
+    ;(async () => {
+      try {
+        const token = await getAccessToken()
+        const res = await fetch(`${API_URL}${selected.url}`, {
+          headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+        })
+        if (!res.ok) throw new Error(`Görsel indirilemedi (${res.status}).`)
+        const blob = await res.blob()
+        if (cancelled) return
+        url = URL.createObjectURL(blob)
+        setSelectedBlob(blob)
+        setSelectedSrc(url)
+      } catch (err) {
+        if (!cancelled) toast((err as Error).message)
+      }
+    })()
+    return () => {
+      cancelled = true
+      if (url) URL.revokeObjectURL(url)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selected])
 
   // Doküman listesi: hem seçim için hem de sayfa sayısını öğrenmek için
   const docsQuery = useQuery({
@@ -269,7 +305,8 @@ export default function CandidateModal({
   }, [docsQuery.data, docId])
 
   useEffect(() => {
-    if (open) {
+    // Kullanıcı aralığı elle değiştirdiyse (dirty) sorgu çözülünce üzerine yazma
+    if (open && !rangeDirty) {
       setRange(defaultRange(card.page, selectedDoc?.page_count ?? null))
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -314,12 +351,8 @@ export default function CandidateModal({
 
   const uploadCrop = useMutation({
     mutationFn: async (rect: CropRect) => {
-      if (!selected) throw new Error('Önce bir görsel seçin.')
-      // <img> CORS olmadan canvas'a çizilemez; görseli blob olarak indiriyoruz
-      const res = await fetch(`${API_URL}${selected.url}?token=${token ?? ''}`)
-      if (!res.ok) throw new Error(`Görsel indirilemedi (${res.status}).`)
-      const blob = await res.blob()
-      const bitmap = await createImageBitmap(blob)
+      if (!selectedBlob) throw new Error('Önce bir görsel seçin.')
+      const bitmap = await createImageBitmap(selectedBlob)
       try {
         const canvas = document.createElement('canvas')
         canvas.width = rect.w
@@ -344,9 +377,6 @@ export default function CandidateModal({
 
   const rangeValid = /^\d+(-\d+)?$/.test(range.trim())
   const busy = selectImage.isPending || uploadCrop.isPending
-  const selectedSrc = selected
-    ? `${API_URL}${selected.url}?token=${token ?? ''}`
-    : null
 
   return (
     <Modal open={open} onClose={onClose} title="Görsel Bul" widthClass="max-w-3xl">
@@ -446,7 +476,10 @@ export default function CandidateModal({
               <input
                 type="text"
                 value={range}
-                onChange={(e) => setRange(e.target.value)}
+                onChange={(e) => {
+                  setRange(e.target.value)
+                  setRangeDirty(true)
+                }}
                 placeholder="örn. 10-40"
                 className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none dark:border-slate-600 dark:bg-slate-900 dark:text-slate-100"
               />
@@ -494,11 +527,10 @@ export default function CandidateModal({
                         }}
                         className="shrink-0 rounded-xl border-2 border-slate-200 p-2 text-left transition-colors hover:border-indigo-300"
                       >
-                        <img
-                          src={`${API_URL}${c.url}?token=${token ?? ''}`}
+                        <AuthImage
+                          src={c.url}
                           alt={c.label}
                           className="h-40 w-48 rounded-lg object-contain bg-slate-100"
-                          loading="lazy"
                         />
                         <div className="mt-2 flex items-center justify-between gap-2">
                           <span className="max-w-[140px] truncate text-xs font-medium text-slate-700">

@@ -58,8 +58,7 @@ async function request<T>(
     try {
       const data = await res.json()
       if (data?.detail !== undefined) {
-        message =
-          typeof data.detail === 'string' ? data.detail : JSON.stringify(data.detail)
+        message = readableDetail(data.detail)
       }
     } catch {
       // gövde JSON değilse varsayılan mesaj kalır
@@ -69,6 +68,26 @@ async function request<T>(
 
   if (res.status === 204) return undefined as T
   return (await res.json()) as T
+}
+
+/** FastAPI detail gövdesini okunur Türkçe mesaja çevirir (422 doğrulama dahil). */
+function readableDetail(detail: unknown): string {
+  if (typeof detail === 'string') return detail
+  if (Array.isArray(detail)) {
+    const parts = detail
+      .map((item) => {
+        if (item && typeof item === 'object' && 'msg' in item) {
+          const loc = Array.isArray((item as { loc?: unknown[] }).loc)
+            ? (item as { loc: unknown[] }).loc.filter((l) => l !== 'body').join('.')
+            : ''
+          return loc ? `${loc}: ${(item as { msg: string }).msg}` : (item as { msg: string }).msg
+        }
+        return null
+      })
+      .filter(Boolean)
+    if (parts.length) return `Geçersiz istek — ${parts.join(' · ')}`
+  }
+  return JSON.stringify(detail)
 }
 
 /** Content-Disposition başlığından dosya adını ayıklar (varsa). */

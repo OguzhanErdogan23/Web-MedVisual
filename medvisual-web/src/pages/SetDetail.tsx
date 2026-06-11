@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { api, API_URL, getAccessToken } from '../lib/api'
+import { api } from '../lib/api'
 import { useToast } from '../hooks/useToast'
 import { useTerms } from '../hooks/useTerms'
 import StatusBadge from '../components/StatusBadge'
@@ -11,6 +11,7 @@ import EmptyState from '../components/EmptyState'
 import ConfirmDialog from '../components/ConfirmDialog'
 import CandidateModal from '../components/CandidateModal'
 import ExportMenu from '../components/ExportMenu'
+import AuthImage from '../components/AuthImage'
 import type {
   CardRow,
   DocumentsResponse,
@@ -23,27 +24,29 @@ const SET_EXPORT_FORMATS = [
   { value: 'json', label: 'JSON', ext: 'json' },
   { value: 'csv', label: 'CSV', ext: 'csv' },
   { value: 'tsv', label: 'TSV', ext: 'tsv' },
-  { value: 'anki', label: 'Anki', ext: 'txt' },
+  { value: 'anki', label: 'Anki', ext: 'tsv' },
   { value: 'txt', label: 'TXT', ext: 'txt' },
   { value: 'pdf', label: 'PDF', ext: 'pdf' },
   { value: 'apkg', label: 'APKG', ext: 'apkg' },
 ]
 
-function resolveImageUrl(url: string, token: string | null): string {
-  if (url.startsWith('http://') || url.startsWith('https://')) return url
-  return `${API_URL}${url}?token=${token ?? ''}`
+/** Set açıklamasındaki "uretim: X" bilgisini ayıklar (llm_enhanced rozeti). */
+function productionBadge(description: string | null): { label: string; gemini: boolean } | null {
+  const m = /uretim:\s*([\w.\-/]+)/i.exec(description ?? '')
+  if (!m) return null
+  const model = m[1]
+  if (model === 'offline') return { label: 'Offline üretim', gemini: false }
+  return { label: `✨ ${model}`, gemini: true }
 }
 
 function CardItem({
   card,
   setId,
   documentId,
-  token,
 }: {
   card: CardRow
   setId: string
   documentId: string | null
-  token: string | null
 }) {
   const queryClient = useQueryClient()
   const { toast } = useToast()
@@ -92,11 +95,10 @@ function CardItem({
       <div className="flex gap-4">
         {card.image_url && (
           <div className="flex shrink-0 flex-col items-center gap-1.5">
-            <img
-              src={resolveImageUrl(card.image_url, token)}
+            <AuthImage
+              src={card.image_url}
               alt="Kart görseli"
               className="h-24 w-28 rounded-lg border border-slate-100 bg-slate-50 object-contain dark:border-slate-700 dark:bg-slate-900"
-              loading="lazy"
             />
             <div className="flex gap-1">
               <button
@@ -214,7 +216,13 @@ function CardItem({
               </button>
             )}
             <button
-              onClick={() => setEditing(true)}
+              onClick={() => {
+                // Düzenlemeye o anki güncel kart verisiyle başla (bayat state'i önler)
+                setFront(card.front)
+                setBack(card.back)
+                setTerm(card.term ?? '')
+                setEditing(true)
+              }}
               className="rounded-lg border border-slate-200 px-2.5 py-1 text-xs font-medium text-slate-600 hover:bg-slate-50 dark:border-slate-600 dark:text-slate-300 dark:hover:bg-slate-700"
             >
               Düzenle
@@ -263,7 +271,6 @@ export default function SetDetail() {
   const queryClient = useQueryClient()
   const { toast } = useToast()
   const termsQuery = useTerms()
-  const [token, setToken] = useState<string | null>(null)
   const [editTitle, setEditTitle] = useState(false)
   const [titleDraft, setTitleDraft] = useState('')
   const [confirmDeleteSet, setConfirmDeleteSet] = useState(false)
@@ -277,10 +284,6 @@ export default function SetDetail() {
   const [autoPickerOpen, setAutoPickerOpen] = useState(false)
   const [autoDocId, setAutoDocId] = useState<string | null>(null)
   const [autoRange, setAutoRange] = useState('')
-
-  useEffect(() => {
-    getAccessToken().then(setToken)
-  }, [])
 
   const setQuery = useQuery({
     queryKey: ['set', id],
@@ -441,6 +444,22 @@ export default function SetDetail() {
           <div className="mt-1.5 flex items-center gap-3 text-sm text-slate-500 dark:text-slate-400">
             <StatusBadge status={set.status} />
             <span>{cards.length} kart</span>
+            {(() => {
+              const badge = productionBadge(set.description)
+              if (!badge) return null
+              return (
+                <span
+                  className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${
+                    badge.gemini
+                      ? 'bg-indigo-50 text-indigo-700 dark:bg-indigo-950/60 dark:text-indigo-300'
+                      : 'bg-slate-100 text-slate-600 dark:bg-slate-700 dark:text-slate-300'
+                  }`}
+                  title="Kart üretiminde kullanılan yöntem"
+                >
+                  {badge.label}
+                </span>
+              )
+            })()}
           </div>
           {set.description && (
             <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">{set.description}</p>
@@ -453,6 +472,13 @@ export default function SetDetail() {
             className="rounded-lg bg-teal-600 px-4 py-2 text-sm font-medium text-white hover:bg-teal-700"
           >
             🎓 Çalış
+          </Link>
+          <Link
+            to={`/study/${set.id}?mode=cram`}
+            title="Tüm kartlarla pratik — tekrar zamanlamasını etkilemez"
+            className="rounded-lg border border-teal-200 bg-teal-50 px-4 py-2 text-sm font-medium text-teal-700 hover:bg-teal-100 dark:border-teal-800 dark:bg-teal-950/50 dark:text-teal-300 dark:hover:bg-teal-900/50"
+          >
+            🎯 Serbest
           </Link>
           <button
             onClick={startAutoImages}
@@ -522,7 +548,6 @@ export default function SetDetail() {
               card={card}
               setId={set.id}
               documentId={set.document_id}
-              token={token}
             />
           ))}
         </div>

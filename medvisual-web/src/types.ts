@@ -51,7 +51,9 @@ export interface SetRow {
   created_at: string
 }
 
-export interface SetDetail extends SetRow {
+// GET /sets/{id} card_count döndürmez (yalnız listede join ile gelir)
+export interface SetDetail extends Omit<SetRow, 'card_count'> {
+  card_count?: number
   cards: CardRow[]
 }
 
@@ -76,7 +78,9 @@ export interface QuizRow {
   created_at: string
 }
 
-export interface QuizDetail extends QuizRow {
+// GET /quizzes/{id} question_count döndürmez (yalnız listede join ile gelir)
+export interface QuizDetail extends Omit<QuizRow, 'question_count'> {
+  question_count?: number
   questions: QuizQuestion[]
 }
 
@@ -94,19 +98,22 @@ export interface MatchCandidate {
 }
 
 export interface MatchResponse {
-  term: string
-  matched: boolean
-  similarity: number
+  term: string | null
+  matched: boolean | null
+  similarity: number | null
   best_page: number | null
   candidates: MatchCandidate[]
 }
 
+// /study/reviews yanıtı ve /study/due içindeki gömülü review (PK = card_id)
 export interface ReviewRow {
-  id: string
   card_id: string
-  grade: number
-  due_at: string
+  ease_factor: number
   interval_days: number
+  repetitions: number
+  due_at: string
+  last_grade: number | null
+  updated_at: string | null
 }
 
 export interface StudyCard extends CardRow {

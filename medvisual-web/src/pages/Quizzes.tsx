@@ -75,6 +75,16 @@ export default function Quizzes() {
             <div key={i} className="h-32 animate-pulse rounded-2xl bg-slate-200/60" />
           ))}
         </div>
+      ) : quizzesQuery.isError ? (
+        <div className="rounded-xl border border-red-200 bg-red-50 px-5 py-4 text-sm text-red-700 dark:border-red-900 dark:bg-red-950/40 dark:text-red-300">
+          Quizler yüklenemedi: {(quizzesQuery.error as Error).message}
+          <button
+            onClick={() => quizzesQuery.refetch()}
+            className="ml-3 rounded-lg bg-red-600 px-3 py-1 text-xs font-medium text-white hover:bg-red-700"
+          >
+            Tekrar dene
+          </button>
+        </div>
       ) : quizzes.length === 0 ? (
         <EmptyState
           icon="❓"
