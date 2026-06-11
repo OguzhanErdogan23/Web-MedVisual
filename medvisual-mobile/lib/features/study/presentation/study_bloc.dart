@@ -36,6 +36,10 @@ final class _ReviewSyncFailed extends StudyEvent {
   const _ReviewSyncFailed();
 }
 
+final class _ReviewQueuedOffline extends StudyEvent {
+  const _ReviewQueuedOffline();
+}
+
 // ---------------------------------------------------------------------------
 // Durum (immutable — freezed). Kuyruk degistirilmez; her cevapta YENI bir
 // durum yayinlanir (declarative UI: ekran yalnizca bu durumun izdusumudur).
@@ -55,7 +59,11 @@ abstract class StudyState with _$StudyState {
     @Default(<Grade, int>{}) Map<Grade, int> gradeCounts,
     /// Sunucuya yazilamayan cevap sayisi (bilgilendirme).
     @Default(0) int syncFailures,
+    /// Cevrimdisi kuyruga alinan cevap sayisi (baglanti gelince gonderilir).
+    @Default(0) int offlineQueued,
     @Default(0) int newCount,
+    /// Serbest (cram) modu: notlar sunucuya yazilmaz, zamanlama etkilenmez.
+    @Default(false) bool cram,
     String? error,
   }) = _StudyState;
 
@@ -72,34 +80,46 @@ abstract class StudyState with _$StudyState {
 // hesaplar, sunucu yazimini arka planda yapar (otorite sunucudur).
 // ---------------------------------------------------------------------------
 class StudyBloc extends Bloc<StudyEvent, StudyState> {
-  StudyBloc(this._repo, {this.setId}) : super(const StudyState()) {
+  StudyBloc(this._repo, {this.setId, this.cramMode = false})
+      : super(const StudyState()) {
     on<StudySessionStarted>(_onStarted);
     on<StudyCardFlipped>(
         (e, emit) => emit(state.copyWith(flipped: !state.flipped)));
     on<StudyCardGraded>(_onGraded);
     on<_ReviewSyncFailed>((e, emit) =>
         emit(state.copyWith(syncFailures: state.syncFailures + 1)));
+    on<_ReviewQueuedOffline>((e, emit) =>
+        emit(state.copyWith(offlineQueued: state.offlineQueued + 1)));
   }
 
   final StudyRepository _repo;
   final String? setId;
+  final bool cramMode;
 
   Future<void> _onStarted(
       StudySessionStarted event, Emitter<StudyState> emit) async {
-    emit(const StudyState(phase: StudyPhase.loading));
+    emit(StudyState(phase: StudyPhase.loading, cram: cramMode));
+    // Onceki cevrimdisi oturumun bekleyen notlarini firsattan gondermeyi dene
+    unawaited(_repo.syncOutbox().catchError((Object _) => 0));
     try {
-      final due = await _repo.due(setId: setId);
+      final due = await _repo.due(
+        setId: setId,
+        mode: cramMode ? 'cram' : 'due',
+      );
       if (due.cards.isEmpty) {
-        emit(const StudyState(phase: StudyPhase.empty));
+        emit(StudyState(phase: StudyPhase.empty, cram: cramMode));
         return;
       }
+      final cards = [...due.cards];
+      if (cramMode) cards.shuffle(); // serbest modda karisik sirayla
       emit(StudyState(
         phase: StudyPhase.active,
-        queue: due.cards,
+        queue: cards,
         newCount: due.newCount,
+        cram: cramMode,
       ));
     } on ApiException catch (e) {
-      emit(StudyState(phase: StudyPhase.failure, error: e.message));
+      emit(StudyState(phase: StudyPhase.failure, error: e.message, cram: cramMode));
     }
   }
 
@@ -117,10 +137,15 @@ class StudyBloc extends Bloc<StudyEvent, StudyState> {
 
     // Kuyruk dokunulmaz; guncellenmis kart yeni listede yer alir
     // (oturum ici gosterim — kalici yazim sunucudadir).
-    final queue = [
+    final updatedCurrent = current.copyWith(review: optimistic);
+    var queue = [
       for (final dc in state.queue)
-        dc.card.id == current.card.id ? dc.copyWith(review: optimistic) : dc,
+        dc.card.id == current.card.id ? updatedCurrent : dc,
     ];
+    // 'Tekrar' denen kart ayni oturumda kuyrugun sonuna geri gelir
+    if (event.grade == Grade.again) {
+      queue = [...queue, updatedCurrent];
+    }
     final counts = {
       ...state.gradeCounts,
       event.grade: (state.gradeCounts[event.grade] ?? 0) + 1,
@@ -136,14 +161,18 @@ class StudyBloc extends Bloc<StudyEvent, StudyState> {
           nextIndex >= queue.length ? StudyPhase.finished : StudyPhase.active,
     ));
 
-    // Sunucu yazimi arka planda (fire-and-forget); hata sayilir ama oturumu
-    // kesmez — SM-2 otoritesi sunucu oldugundan bir sonraki /study/due
-    // cagrisi dogru durumu getirir.
-    unawaited(
-      _repo.submitReview(current.card.id, event.grade).catchError((Object _) {
+    // Serbest modda not sunucuya YAZILMAZ (zamanlama etkilenmez).
+    if (state.cram) return;
+
+    // Sunucu yazimi arka planda; baglanti yoksa repository outbox'a kuyruklar
+    // (kayip yok), gercek sunucu hatasi ise sayilir ama oturumu kesmez.
+    unawaited(() async {
+      try {
+        final result = await _repo.submitReview(current.card.id, event.grade);
+        if (result == null && !isClosed) add(const _ReviewQueuedOffline());
+      } catch (_) {
         if (!isClosed) add(const _ReviewSyncFailed());
-        return const ReviewState();
-      }),
-    );
+      }
+    }());
   }
 }

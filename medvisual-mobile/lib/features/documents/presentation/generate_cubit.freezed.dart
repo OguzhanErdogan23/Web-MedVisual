@@ -14,7 +14,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$GenerateState {
 
- GenerateKind get kind; bool get submitting; String? get error;/// Uretim baslatildiginda olusan set/quiz id'si (yonlendirme icin).
+ GenerateKind get kind; GenerateSource get source; bool get submitting; String? get error;/// Uretim baslatildiginda olusan set/quiz id'si (yonlendirme icin).
  String? get createdId; GenerateKind? get createdKind;
 /// Create a copy of GenerateState
 /// with the given fields replaced by the non-null parameter values.
@@ -26,16 +26,16 @@ $GenerateStateCopyWith<GenerateState> get copyWith => _$GenerateStateCopyWithImp
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is GenerateState&&(identical(other.kind, kind) || other.kind == kind)&&(identical(other.submitting, submitting) || other.submitting == submitting)&&(identical(other.error, error) || other.error == error)&&(identical(other.createdId, createdId) || other.createdId == createdId)&&(identical(other.createdKind, createdKind) || other.createdKind == createdKind));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is GenerateState&&(identical(other.kind, kind) || other.kind == kind)&&(identical(other.source, source) || other.source == source)&&(identical(other.submitting, submitting) || other.submitting == submitting)&&(identical(other.error, error) || other.error == error)&&(identical(other.createdId, createdId) || other.createdId == createdId)&&(identical(other.createdKind, createdKind) || other.createdKind == createdKind));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,kind,submitting,error,createdId,createdKind);
+int get hashCode => Object.hash(runtimeType,kind,source,submitting,error,createdId,createdKind);
 
 @override
 String toString() {
-  return 'GenerateState(kind: $kind, submitting: $submitting, error: $error, createdId: $createdId, createdKind: $createdKind)';
+  return 'GenerateState(kind: $kind, source: $source, submitting: $submitting, error: $error, createdId: $createdId, createdKind: $createdKind)';
 }
 
 
@@ -46,7 +46,7 @@ abstract mixin class $GenerateStateCopyWith<$Res>  {
   factory $GenerateStateCopyWith(GenerateState value, $Res Function(GenerateState) _then) = _$GenerateStateCopyWithImpl;
 @useResult
 $Res call({
- GenerateKind kind, bool submitting, String? error, String? createdId, GenerateKind? createdKind
+ GenerateKind kind, GenerateSource source, bool submitting, String? error, String? createdId, GenerateKind? createdKind
 });
 
 
@@ -63,10 +63,11 @@ class _$GenerateStateCopyWithImpl<$Res>
 
 /// Create a copy of GenerateState
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? kind = null,Object? submitting = null,Object? error = freezed,Object? createdId = freezed,Object? createdKind = freezed,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? kind = null,Object? source = null,Object? submitting = null,Object? error = freezed,Object? createdId = freezed,Object? createdKind = freezed,}) {
   return _then(_self.copyWith(
 kind: null == kind ? _self.kind : kind // ignore: cast_nullable_to_non_nullable
-as GenerateKind,submitting: null == submitting ? _self.submitting : submitting // ignore: cast_nullable_to_non_nullable
+as GenerateKind,source: null == source ? _self.source : source // ignore: cast_nullable_to_non_nullable
+as GenerateSource,submitting: null == submitting ? _self.submitting : submitting // ignore: cast_nullable_to_non_nullable
 as bool,error: freezed == error ? _self.error : error // ignore: cast_nullable_to_non_nullable
 as String?,createdId: freezed == createdId ? _self.createdId : createdId // ignore: cast_nullable_to_non_nullable
 as String?,createdKind: freezed == createdKind ? _self.createdKind : createdKind // ignore: cast_nullable_to_non_nullable
@@ -155,10 +156,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( GenerateKind kind,  bool submitting,  String? error,  String? createdId,  GenerateKind? createdKind)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( GenerateKind kind,  GenerateSource source,  bool submitting,  String? error,  String? createdId,  GenerateKind? createdKind)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _GenerateState() when $default != null:
-return $default(_that.kind,_that.submitting,_that.error,_that.createdId,_that.createdKind);case _:
+return $default(_that.kind,_that.source,_that.submitting,_that.error,_that.createdId,_that.createdKind);case _:
   return orElse();
 
 }
@@ -176,10 +177,10 @@ return $default(_that.kind,_that.submitting,_that.error,_that.createdId,_that.cr
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( GenerateKind kind,  bool submitting,  String? error,  String? createdId,  GenerateKind? createdKind)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( GenerateKind kind,  GenerateSource source,  bool submitting,  String? error,  String? createdId,  GenerateKind? createdKind)  $default,) {final _that = this;
 switch (_that) {
 case _GenerateState():
-return $default(_that.kind,_that.submitting,_that.error,_that.createdId,_that.createdKind);case _:
+return $default(_that.kind,_that.source,_that.submitting,_that.error,_that.createdId,_that.createdKind);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -196,10 +197,10 @@ return $default(_that.kind,_that.submitting,_that.error,_that.createdId,_that.cr
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( GenerateKind kind,  bool submitting,  String? error,  String? createdId,  GenerateKind? createdKind)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( GenerateKind kind,  GenerateSource source,  bool submitting,  String? error,  String? createdId,  GenerateKind? createdKind)?  $default,) {final _that = this;
 switch (_that) {
 case _GenerateState() when $default != null:
-return $default(_that.kind,_that.submitting,_that.error,_that.createdId,_that.createdKind);case _:
+return $default(_that.kind,_that.source,_that.submitting,_that.error,_that.createdId,_that.createdKind);case _:
   return null;
 
 }
@@ -211,10 +212,11 @@ return $default(_that.kind,_that.submitting,_that.error,_that.createdId,_that.cr
 
 
 class _GenerateState implements GenerateState {
-  const _GenerateState({this.kind = GenerateKind.cards, this.submitting = false, this.error, this.createdId, this.createdKind});
+  const _GenerateState({this.kind = GenerateKind.cards, this.source = GenerateSource.auto, this.submitting = false, this.error, this.createdId, this.createdKind});
   
 
 @override@JsonKey() final  GenerateKind kind;
+@override@JsonKey() final  GenerateSource source;
 @override@JsonKey() final  bool submitting;
 @override final  String? error;
 /// Uretim baslatildiginda olusan set/quiz id'si (yonlendirme icin).
@@ -231,16 +233,16 @@ _$GenerateStateCopyWith<_GenerateState> get copyWith => __$GenerateStateCopyWith
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _GenerateState&&(identical(other.kind, kind) || other.kind == kind)&&(identical(other.submitting, submitting) || other.submitting == submitting)&&(identical(other.error, error) || other.error == error)&&(identical(other.createdId, createdId) || other.createdId == createdId)&&(identical(other.createdKind, createdKind) || other.createdKind == createdKind));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _GenerateState&&(identical(other.kind, kind) || other.kind == kind)&&(identical(other.source, source) || other.source == source)&&(identical(other.submitting, submitting) || other.submitting == submitting)&&(identical(other.error, error) || other.error == error)&&(identical(other.createdId, createdId) || other.createdId == createdId)&&(identical(other.createdKind, createdKind) || other.createdKind == createdKind));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,kind,submitting,error,createdId,createdKind);
+int get hashCode => Object.hash(runtimeType,kind,source,submitting,error,createdId,createdKind);
 
 @override
 String toString() {
-  return 'GenerateState(kind: $kind, submitting: $submitting, error: $error, createdId: $createdId, createdKind: $createdKind)';
+  return 'GenerateState(kind: $kind, source: $source, submitting: $submitting, error: $error, createdId: $createdId, createdKind: $createdKind)';
 }
 
 
@@ -251,7 +253,7 @@ abstract mixin class _$GenerateStateCopyWith<$Res> implements $GenerateStateCopy
   factory _$GenerateStateCopyWith(_GenerateState value, $Res Function(_GenerateState) _then) = __$GenerateStateCopyWithImpl;
 @override @useResult
 $Res call({
- GenerateKind kind, bool submitting, String? error, String? createdId, GenerateKind? createdKind
+ GenerateKind kind, GenerateSource source, bool submitting, String? error, String? createdId, GenerateKind? createdKind
 });
 
 
@@ -268,10 +270,11 @@ class __$GenerateStateCopyWithImpl<$Res>
 
 /// Create a copy of GenerateState
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? kind = null,Object? submitting = null,Object? error = freezed,Object? createdId = freezed,Object? createdKind = freezed,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? kind = null,Object? source = null,Object? submitting = null,Object? error = freezed,Object? createdId = freezed,Object? createdKind = freezed,}) {
   return _then(_GenerateState(
 kind: null == kind ? _self.kind : kind // ignore: cast_nullable_to_non_nullable
-as GenerateKind,submitting: null == submitting ? _self.submitting : submitting // ignore: cast_nullable_to_non_nullable
+as GenerateKind,source: null == source ? _self.source : source // ignore: cast_nullable_to_non_nullable
+as GenerateSource,submitting: null == submitting ? _self.submitting : submitting // ignore: cast_nullable_to_non_nullable
 as bool,error: freezed == error ? _self.error : error // ignore: cast_nullable_to_non_nullable
 as String?,createdId: freezed == createdId ? _self.createdId : createdId // ignore: cast_nullable_to_non_nullable
 as String?,createdKind: freezed == createdKind ? _self.createdKind : createdKind // ignore: cast_nullable_to_non_nullable

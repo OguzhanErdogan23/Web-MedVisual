@@ -3,6 +3,7 @@ import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart' hide AuthState;
 
 import '../../../core/api_client.dart';
+import '../../../core/safe_emit.dart';
 import '../../../core/widgets.dart';
 import '../data/profile_repository.dart';
 import '../domain/profile.dart';
@@ -21,7 +22,7 @@ abstract class SettingsState with _$SettingsState {
 }
 
 /// Ayarlar ekrani: profil yukle/kaydet + sifre degistir.
-class SettingsCubit extends Cubit<SettingsState> {
+class SettingsCubit extends Cubit<SettingsState> with SafeEmit {
   SettingsCubit(this._repo, this._client) : super(const SettingsState());
 
   final ProfileRepository _repo;
@@ -31,9 +32,9 @@ class SettingsCubit extends Cubit<SettingsState> {
     emit(state.copyWith(status: ViewStatus.loading, error: null));
     try {
       final profile = await _repo.get();
-      emit(state.copyWith(status: ViewStatus.success, profile: profile));
+      safeEmit(state.copyWith(status: ViewStatus.success, profile: profile));
     } on ApiException catch (e) {
-      emit(state.copyWith(status: ViewStatus.failure, error: e.message));
+      safeEmit(state.copyWith(status: ViewStatus.failure, error: e.message));
     }
   }
 
@@ -41,10 +42,10 @@ class SettingsCubit extends Cubit<SettingsState> {
     emit(state.copyWith(saving: true));
     try {
       final profile = await _repo.updateDisplayName(displayName);
-      emit(state.copyWith(saving: false, profile: profile));
-      _notify('Profil guncellendi.');
+      safeEmit(state.copyWith(saving: false, profile: profile));
+      _notify('Profil güncellendi.');
     } on ApiException catch (e) {
-      emit(state.copyWith(saving: false));
+      safeEmit(state.copyWith(saving: false));
       _notify(e.message);
     }
   }
@@ -53,19 +54,19 @@ class SettingsCubit extends Cubit<SettingsState> {
     emit(state.copyWith(saving: true));
     try {
       await _client.auth.updateUser(UserAttributes(password: newPassword));
-      emit(state.copyWith(saving: false));
-      _notify('Sifre degistirildi.');
+      safeEmit(state.copyWith(saving: false));
+      _notify('Şifre değiştirildi.');
     } on AuthException catch (e) {
-      emit(state.copyWith(saving: false));
-      _notify('Sifre degistirilemedi: ${e.message}');
+      safeEmit(state.copyWith(saving: false));
+      _notify('Şifre değiştirilemedi: ${e.message}');
     } catch (_) {
-      emit(state.copyWith(saving: false));
-      _notify('Sifre degistirilemedi. Lutfen tekrar deneyin.');
+      safeEmit(state.copyWith(saving: false));
+      _notify('Şifre değiştirilemedi. Lütfen tekrar deneyin.');
     }
   }
 
   void _notify(String message) {
-    emit(state.copyWith(notice: message));
-    emit(state.copyWith(notice: null));
+    safeEmit(state.copyWith(notice: message));
+    safeEmit(state.copyWith(notice: null));
   }
 }

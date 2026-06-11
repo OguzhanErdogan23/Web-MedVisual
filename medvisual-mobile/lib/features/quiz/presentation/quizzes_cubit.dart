@@ -2,6 +2,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 
 import '../../../core/api_client.dart';
+import '../../../core/safe_emit.dart';
 import '../../../core/widgets.dart';
 import '../data/quizzes_repository.dart';
 import '../domain/quiz.dart';
@@ -19,7 +20,7 @@ abstract class QuizzesState with _$QuizzesState {
 }
 
 /// Quiz listesi.
-class QuizzesCubit extends Cubit<QuizzesState> {
+class QuizzesCubit extends Cubit<QuizzesState> with SafeEmit {
   QuizzesCubit(this._repo) : super(const QuizzesState());
 
   final QuizzesRepository _repo;
@@ -30,40 +31,43 @@ class QuizzesCubit extends Cubit<QuizzesState> {
     }
     try {
       final quizzes = await _repo.list();
-      emit(state.copyWith(
+      safeEmit(state.copyWith(
           status: ViewStatus.success, quizzes: quizzes, error: null));
     } on ApiException catch (e) {
-      emit(state.copyWith(status: ViewStatus.failure, error: e.message));
+      safeEmit(state.copyWith(status: ViewStatus.failure, error: e.message));
     }
   }
 
   Future<void> delete(String id) async {
     try {
       await _repo.delete(id);
-      emit(state.copyWith(
+      safeEmit(state.copyWith(
         quizzes: state.quizzes.where((q) => q.id != id).toList(),
         notice: 'Quiz silindi.',
       ));
-      emit(state.copyWith(notice: null));
+      safeEmit(state.copyWith(notice: null));
     } on ApiException catch (e) {
-      emit(state.copyWith(notice: e.message));
-      emit(state.copyWith(notice: null));
+      safeEmit(state.copyWith(notice: e.message));
+      safeEmit(state.copyWith(notice: null));
     }
   }
 
   Future<void> rename(String id, String title) async {
     try {
       final updated = await _repo.rename(id, title);
-      emit(state.copyWith(
+      safeEmit(state.copyWith(
         quizzes: [
-          for (final q in state.quizzes) q.id == id ? updated : q,
+          // PATCH yaniti question_count icermez; mevcut nesneyi koruyup
+          // yalnizca basligi guncelle (aksi halde listede soru sayisi 0 olur)
+          for (final q in state.quizzes)
+            q.id == id ? q.copyWith(title: updated.title) : q,
         ],
-        notice: 'Quiz yeniden adlandirildi.',
+        notice: 'Quiz yeniden adlandırıldı.',
       ));
-      emit(state.copyWith(notice: null));
+      safeEmit(state.copyWith(notice: null));
     } on ApiException catch (e) {
-      emit(state.copyWith(notice: e.message));
-      emit(state.copyWith(notice: null));
+      safeEmit(state.copyWith(notice: e.message));
+      safeEmit(state.copyWith(notice: null));
     }
   }
 }

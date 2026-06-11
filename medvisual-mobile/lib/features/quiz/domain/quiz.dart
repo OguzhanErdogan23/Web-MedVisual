@@ -1,3 +1,5 @@
+// freezed yapici parametresinde @JsonKey kullanimi icin (defaultValue)
+// ignore_for_file: invalid_annotation_target
 import 'package:freezed_annotation/freezed_annotation.dart';
 
 part 'quiz.freezed.dart';
@@ -10,7 +12,8 @@ abstract class Quiz with _$Quiz {
 
   const factory Quiz({
     required String id,
-    required String title,
+    // DB'de title nullable; null gelirse liste cokmesin diye varsayilan
+    @JsonKey(defaultValue: 'Quiz') required String title,
     required String status,
     String? error,
     String? documentId,

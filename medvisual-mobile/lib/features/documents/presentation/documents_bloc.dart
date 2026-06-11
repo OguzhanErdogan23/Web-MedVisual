@@ -90,6 +90,9 @@ class DocumentsBloc extends Bloc<DocumentsEvent, DocumentsState> {
   final DocumentsRepository _documents;
   final StudyRepository _study;
   Timer? _pollTimer;
+  // Yavas agda 2.5 sn'lik poll'larin ust uste binmesini onler (droppable):
+  // onceki yukleme bitmeden yenisi baslamaz, eski yanit yeniyi ezemez.
+  bool _loadInFlight = false;
 
   static const _pollInterval = Duration(milliseconds: 2500);
 
@@ -101,6 +104,8 @@ class DocumentsBloc extends Bloc<DocumentsEvent, DocumentsState> {
 
   Future<void> _load(Emitter<DocumentsState> emit,
       {required bool silent}) async {
+    if (_loadInFlight) return;
+    _loadInFlight = true;
     if (!silent) {
       emit(state.copyWith(status: ViewStatus.loading, error: null));
     }
@@ -127,6 +132,8 @@ class DocumentsBloc extends Bloc<DocumentsEvent, DocumentsState> {
       } else {
         _notify(emit, error: e.message);
       }
+    } finally {
+      _loadInFlight = false;
     }
   }
 
@@ -167,7 +174,7 @@ class DocumentsBloc extends Bloc<DocumentsEvent, DocumentsState> {
         documents:
             state.documents.where((d) => d.id != event.id).toList(),
       ));
-      _notify(emit, notice: 'Dokuman silindi.');
+      _notify(emit, notice: 'Doküman silindi.');
       await _load(emit, silent: true);
     } on ApiException catch (e) {
       _notify(emit, error: e.message);

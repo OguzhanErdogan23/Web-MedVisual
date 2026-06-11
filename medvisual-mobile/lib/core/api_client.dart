@@ -35,10 +35,40 @@ Dio buildApiClient() {
         }
         handler.next(options);
       },
+      onError: (error, handler) async {
+        // 401: token suresi dolmus olabilir — oturumu yenileyip istegi
+        // BIR kez tekrarla; yenileme de basarisizsa oturumu kapat
+        // (router refreshListenable giris ekranina yonlendirir).
+        final status = error.response?.statusCode;
+        final retried = error.requestOptions.extra['authRetried'] == true;
+        if (status == 401 && !retried) {
+          try {
+            final auth = Supabase.instance.client.auth;
+            final refreshed = await auth.refreshSession();
+            final token = refreshed.session?.accessToken;
+            if (token != null) {
+              final opts = error.requestOptions;
+              opts.headers['Authorization'] = 'Bearer $token';
+              opts.extra['authRetried'] = true;
+              final response = await dio.fetch<dynamic>(opts);
+              return handler.resolve(response);
+            }
+          } catch (_) {
+            // yenileme basarisiz: oturum gercekten gecersiz
+            await Supabase.instance.client.auth.signOut();
+          }
+        }
+        handler.next(error);
+      },
     ),
   );
   return dio;
 }
+
+/// DIP taramasi (match) dakikalarca surebilir; varsayilan 5 dk receive
+/// timeout bu cagrida yetmez. Cagri bazinda genis timeout secenegi.
+Options longReceiveOptions() =>
+    Options(receiveTimeout: const Duration(minutes: 30));
 
 /// Gecerli access token (gorsel URL'lerine `?token=` olarak eklenir;
 /// `<img>`/Image.network basit kullanim icin baslik gonderemez).
@@ -65,7 +95,7 @@ String readableApiError(Object error) {
       if (detail is List && detail.isNotEmpty) {
         final first = detail.first;
         if (first is Map && first['msg'] != null) {
-          return 'Gecersiz istek: ${first['msg']}';
+          return 'Geçersiz istek: ${first['msg']}';
         }
       }
       return detail.toString();
@@ -73,16 +103,16 @@ String readableApiError(Object error) {
     return switch (error.type) {
       DioExceptionType.connectionTimeout ||
       DioExceptionType.connectionError =>
-        'Sunucuya ulasilamadi. API adresini ve agi kontrol edin.',
+        'Sunucuya ulaşılamadı. API adresini ve ağı kontrol edin.',
       DioExceptionType.receiveTimeout ||
       DioExceptionType.sendTimeout =>
-        'Istek zaman asimina ugradi. Lutfen tekrar deneyin.',
+        'İstek zaman aşımına uğradı. Lütfen tekrar deneyin.',
       DioExceptionType.badResponse =>
-        'Sunucu hatasi (${error.response?.statusCode}). Lutfen tekrar deneyin.',
-      _ => 'Beklenmeyen bir ag hatasi olustu.',
+        'Sunucu hatası (${error.response?.statusCode}). Lütfen tekrar deneyin.',
+      _ => 'Beklenmeyen bir ağ hatası oluştu.',
     };
   }
-  return 'Beklenmeyen bir hata olustu.';
+  return 'Beklenmeyen bir hata oluştu.';
 }
 
 /// Repository cagrilarini sarar: tum hatalari tipli [ApiException]'a cevirir.

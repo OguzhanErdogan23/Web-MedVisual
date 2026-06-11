@@ -16,17 +16,21 @@ import 'study_bloc.dart';
 
 /// Calisma oturumu: buyuk kart (dokununca cevrilir), 4 not butonu,
 /// SM-2 saf fonksiyonuyla optimistic ilerleme.
+/// [cram] true ise serbest mod: tum kartlar gelir, notlar sunucuya yazilmaz.
 class StudyScreen extends StatelessWidget {
-  const StudyScreen({super.key, this.setId});
+  const StudyScreen({super.key, this.setId, this.cram = false});
 
   final String? setId;
+  final bool cram;
 
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
-      create: (context) =>
-          StudyBloc(context.read<StudyRepository>(), setId: setId)
-            ..add(const StudySessionStarted()),
+      create: (context) => StudyBloc(
+        context.read<StudyRepository>(),
+        setId: setId,
+        cramMode: cram,
+      )..add(const StudySessionStarted()),
       child: const _StudyBody(),
     );
   }
@@ -66,19 +70,25 @@ class _StudyBodyState extends State<_StudyBody> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Calisma Oturumu')),
+      appBar: AppBar(
+        title: BlocBuilder<StudyBloc, StudyState>(
+          builder: (context, state) =>
+              Text(state.cram ? 'Serbest Çalışma' : 'Çalışma Oturumu'),
+        ),
+      ),
       body: BlocBuilder<StudyBloc, StudyState>(
         builder: (context, state) {
           return switch (state.phase) {
             StudyPhase.loading =>
               const Center(child: CircularProgressIndicator()),
             StudyPhase.failure => ErrorView(
-                message: state.error ?? 'Kartlar yuklenemedi.',
+                message: state.error ?? 'Kartlar yüklenemedi.',
                 onRetry: () => context
                     .read<StudyBloc>()
                     .add(const StudySessionStarted()),
               ),
-            StudyPhase.empty => _EmptyState(onClose: () => context.pop()),
+            StudyPhase.empty => _EmptyState(
+                cram: state.cram, onClose: () => context.pop()),
             StudyPhase.finished => _Summary(state: state),
             StudyPhase.active => _ActiveSession(
                 state: state,
@@ -97,8 +107,9 @@ class _StudyBodyState extends State<_StudyBody> {
 }
 
 class _EmptyState extends StatelessWidget {
-  const _EmptyState({required this.onClose});
+  const _EmptyState({required this.cram, required this.onClose});
 
+  final bool cram;
   final VoidCallback onClose;
 
   @override
@@ -110,10 +121,14 @@ class _EmptyState extends StatelessWidget {
           const Icon(Icons.celebration_outlined,
               size: 56, color: AppColors.teal),
           const SizedBox(height: 12),
-          const Text('Harika! Su an vadesi gelen kart yok.',
-              style: TextStyle(fontWeight: FontWeight.w600)),
+          Text(
+            cram
+                ? 'Bu kapsamda çalışılacak kart bulunamadı.'
+                : 'Harika! Şu an vadesi gelen kart yok.',
+            style: const TextStyle(fontWeight: FontWeight.w600),
+          ),
           const SizedBox(height: 16),
-          FilledButton(onPressed: onClose, child: const Text('Geri don')),
+          FilledButton(onPressed: onClose, child: const Text('Geri dön')),
         ],
       ),
     );
@@ -138,9 +153,28 @@ class _ActiveSession extends StatelessWidget {
     final total = state.queue.length;
     final current = state.current;
     final review = current?.review ?? const ReviewState();
+    final scheme = Theme.of(context).colorScheme;
     return SafeArea(
       child: Column(
         children: [
+          if (state.cram)
+            Container(
+              width: double.infinity,
+              margin: const EdgeInsets.fromLTRB(20, 8, 20, 0),
+              padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 12),
+              decoration: BoxDecoration(
+                color: AppColors.teal.withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: const Text(
+                '🎯 Serbest mod — notlar tekrar zamanlamasını etkilemez',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.teal),
+              ),
+            ),
           Padding(
             padding: const EdgeInsets.fromLTRB(20, 12, 20, 0),
             child: Column(
@@ -152,8 +186,10 @@ class _ActiveSession extends StatelessWidget {
                         style: const TextStyle(
                             fontWeight: FontWeight.w700,
                             color: AppColors.indigo)),
-                    Text('${state.newCount} yeni',
-                        style: const TextStyle(color: Colors.blueGrey)),
+                    Text(
+                      state.cram ? 'karışık sıra' : '${state.newCount} yeni',
+                      style: TextStyle(color: scheme.onSurfaceVariant),
+                    ),
                   ],
                 ),
                 const SizedBox(height: 8),
@@ -162,7 +198,7 @@ class _ActiveSession extends StatelessWidget {
                   child: LinearProgressIndicator(
                     value: total == 0 ? 0 : state.index / total,
                     minHeight: 6,
-                    backgroundColor: const Color(0xFFE3E6F0),
+                    backgroundColor: scheme.surfaceContainerHighest,
                   ),
                 ),
               ],
@@ -209,25 +245,33 @@ class _ActiveSession extends StatelessWidget {
                     children: [
                       _GradeButton(
                         label: 'Tekrar',
-                        sublabel: projectedIntervalLabel(review, Grade.again),
+                        sublabel: state.cram
+                            ? 'serbest'
+                            : projectedIntervalLabel(review, Grade.again),
                         color: AppColors.danger,
                         onPressed: () => onGradePressed(Grade.again),
                       ),
                       _GradeButton(
                         label: 'Zor',
-                        sublabel: projectedIntervalLabel(review, Grade.hard),
+                        sublabel: state.cram
+                            ? 'serbest'
+                            : projectedIntervalLabel(review, Grade.hard),
                         color: AppColors.warning,
                         onPressed: () => onGradePressed(Grade.hard),
                       ),
                       _GradeButton(
-                        label: 'Iyi',
-                        sublabel: projectedIntervalLabel(review, Grade.good),
+                        label: 'İyi',
+                        sublabel: state.cram
+                            ? 'serbest'
+                            : projectedIntervalLabel(review, Grade.good),
                         color: AppColors.teal,
                         onPressed: () => onGradePressed(Grade.good),
                       ),
                       _GradeButton(
                         label: 'Kolay',
-                        sublabel: projectedIntervalLabel(review, Grade.easy),
+                        sublabel: state.cram
+                            ? 'serbest'
+                            : projectedIntervalLabel(review, Grade.easy),
                         color: AppColors.indigo,
                         onPressed: () => onGradePressed(Grade.easy),
                       ),
@@ -237,8 +281,8 @@ class _ActiveSession extends StatelessWidget {
                     height: 64,
                     child: Center(
                       child: Text(
-                        'Cevabi gormek icin karta dokunun',
-                        style: TextStyle(color: Colors.blueGrey.shade400),
+                        'Cevabı görmek için karta dokunun',
+                        style: TextStyle(color: scheme.onSurfaceVariant),
                       ),
                     ),
                   ),
@@ -263,14 +307,19 @@ class _StudyCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final card = dueCard.card;
+    final scheme = Theme.of(context).colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return GestureDetector(
       onTap: onTap,
       child: Container(
         decoration: BoxDecoration(
-          color: Colors.white,
+          // Koyu temada sabit beyaz yerine tema yuzeyi (metin okunur kalir)
+          color: scheme.surface,
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
-            color: flipped ? AppColors.teal : const Color(0xFFD5DAE8),
+            color: flipped
+                ? AppColors.teal
+                : (isDark ? scheme.outlineVariant : const Color(0xFFD5DAE8)),
             width: flipped ? 1.6 : 1,
           ),
           boxShadow: const [
@@ -288,7 +337,7 @@ class _StudyCard extends StatelessWidget {
             key: ValueKey(flipped),
             children: [
               Text(
-                flipped ? 'ARKA YUZ' : 'ON YUZ',
+                flipped ? 'ARKA YÜZ' : 'ÖN YÜZ',
                 style: TextStyle(
                   fontSize: 11,
                   fontWeight: FontWeight.w800,
@@ -305,9 +354,9 @@ class _StudyCard extends StatelessWidget {
                     child: Image.network(
                       resolveImageUrl(card.imageUrl!),
                       fit: BoxFit.contain,
-                      errorBuilder: (context, error, stack) => const Center(
+                      errorBuilder: (context, error, stack) => Center(
                         child: Icon(Icons.broken_image_outlined,
-                            color: Colors.blueGrey),
+                            color: scheme.onSurfaceVariant),
                       ),
                     ),
                   ),
@@ -328,8 +377,8 @@ class _StudyCard extends StatelessWidget {
               ),
               if (card.page != null)
                 Text('Sayfa ${card.page}',
-                    style: const TextStyle(
-                        fontSize: 11, color: Colors.blueGrey)),
+                    style: TextStyle(
+                        fontSize: 11, color: scheme.onSurfaceVariant)),
             ],
           ),
         ),
@@ -385,10 +434,11 @@ class _Summary extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
     final rows = [
       ('Tekrar', Grade.again, AppColors.danger),
       ('Zor', Grade.hard, AppColors.warning),
-      ('Iyi', Grade.good, AppColors.teal),
+      ('İyi', Grade.good, AppColors.teal),
       ('Kolay', Grade.easy, AppColors.indigo),
     ];
     return Center(
@@ -404,7 +454,7 @@ class _Summary extends StatelessWidget {
                   size: 56, color: AppColors.teal),
               const SizedBox(height: 10),
               Text(
-                'Oturum tamamlandi!',
+                'Oturum tamamlandı!',
                 textAlign: TextAlign.center,
                 style: Theme.of(context)
                     .textTheme
@@ -413,9 +463,11 @@ class _Summary extends StatelessWidget {
               ),
               const SizedBox(height: 4),
               Text(
-                '${state.answered} kart calisildi',
+                state.cram
+                    ? '${state.answered} kart çalışıldı (serbest mod — kayıt edilmedi)'
+                    : '${state.answered} kart çalışıldı',
                 textAlign: TextAlign.center,
-                style: const TextStyle(color: Colors.blueGrey),
+                style: TextStyle(color: scheme.onSurfaceVariant),
               ),
               const SizedBox(height: 20),
               for (final (label, grade, color) in rows)
@@ -437,11 +489,19 @@ class _Summary extends StatelessWidget {
                     ],
                   ),
                 ),
+              if (state.offlineQueued > 0) ...[
+                const SizedBox(height: 12),
+                Text(
+                  '${state.offlineQueued} cevap çevrimdışı kaydedildi; '
+                  'bağlantı gelince otomatik gönderilecek.',
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(fontSize: 12, color: AppColors.teal),
+                ),
+              ],
               if (state.syncFailures > 0) ...[
                 const SizedBox(height: 12),
                 Text(
-                  '${state.syncFailures} cevap sunucuya yazilamadi; '
-                  'baglanti gelince yeniden calisilabilir.',
+                  '${state.syncFailures} cevap sunucuya yazılamadı.',
                   textAlign: TextAlign.center,
                   style: const TextStyle(
                       fontSize: 12, color: AppColors.warning),

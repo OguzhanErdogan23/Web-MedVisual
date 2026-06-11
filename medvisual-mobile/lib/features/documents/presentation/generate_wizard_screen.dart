@@ -62,23 +62,36 @@ class _WizardBodyState extends State<_WizardBody> {
   }
 
   String? _validateRange(String? v) {
-    if (v == null || v.trim().isEmpty) return 'Sayfa araligi girin (orn. 25-50)';
-    final re = RegExp(r'^\d+\s*-\s*\d+$');
-    if (!re.hasMatch(v.trim())) return 'Format: baslangic-bitis (orn. 25-50)';
-    final parts = v.split('-').map((p) => int.parse(p.trim())).toList();
-    if (parts[0] < 1 || parts[1] < parts[0]) return 'Gecersiz aralik';
+    if (v == null || v.trim().isEmpty) {
+      return 'Sayfa aralığı girin (örn. 25-50 veya tek sayfa 25)';
+    }
+    // Tek sayfa da kabul edilir (web ile ayni kural)
+    final m = RegExp(r'^(\d+)(?:\s*-\s*(\d+))?$').firstMatch(v.trim());
+    if (m == null) return 'Format: 25-50 veya tek sayfa 25';
+    final start = int.parse(m.group(1)!);
+    final end = m.group(2) != null ? int.parse(m.group(2)!) : start;
+    if (start < 1 || end < start) return 'Geçersiz aralık';
     final pages = widget.document?.pageCount;
-    if (pages != null && parts[1] > pages) {
-      return 'Dokuman $pages sayfa; aralik asiyor';
+    if (pages != null && end > pages) {
+      return 'Doküman $pages sayfa; aralık aşıyor';
     }
     return null;
+  }
+
+  /// "n" girilirse backend icin "n-n" bicimine cevirir.
+  String _normalizedRange() {
+    final m =
+        RegExp(r'^(\d+)(?:\s*-\s*(\d+))?$').firstMatch(_range.text.trim())!;
+    final start = m.group(1)!;
+    final end = m.group(2) ?? start;
+    return '$start-$end';
   }
 
   void _submit(BuildContext context) {
     if (!(_formKey.currentState?.validate() ?? false)) return;
     context.read<GenerateCubit>().submit(
           documentId: widget.documentId,
-          range: _range.text.trim(),
+          range: _normalizedRange(),
           count: int.parse(_count.text.trim()),
           enhance: _enhance,
           title: _title.text.trim().isEmpty ? null : _title.text.trim(),
@@ -88,8 +101,12 @@ class _WizardBodyState extends State<_WizardBody> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Icerik Uret')),
+      appBar: AppBar(title: const Text('İçerik Üret')),
       body: BlocConsumer<GenerateCubit, GenerateState>(
+        // Hata/yonlendirme yalnizca degistiginde islensin: sekme degisiminde
+        // ayni hata snack'inin tekrar gosterilmesini onler
+        listenWhen: (p, c) =>
+            p.error != c.error || p.createdId != c.createdId,
         listener: (context, state) {
           if (state.error != null) {
             showSnack(context, state.error!, error: true);
@@ -127,7 +144,7 @@ class _WizardBodyState extends State<_WizardBody> {
                     segments: const [
                       ButtonSegment(
                         value: GenerateKind.cards,
-                        label: Text('Bilgi Karti'),
+                        label: Text('Bilgi Kartı'),
                         icon: Icon(Icons.style_outlined),
                       ),
                       ButtonSegment(
@@ -144,25 +161,50 @@ class _WizardBodyState extends State<_WizardBody> {
                   TextFormField(
                     controller: _range,
                     decoration: const InputDecoration(
-                      labelText: 'Sayfa araligi',
-                      hintText: 'orn. 25-50',
+                      labelText: 'Sayfa aralığı',
+                      hintText: 'örn. 25-50',
                       prefixIcon: Icon(Icons.menu_book_outlined),
                     ),
                     validator: _validateRange,
+                  ),
+                  const SizedBox(height: 14),
+                  // Kaynak secimi: metin katmani bozuk PDF'lerde OCR'a zorlama
+                  // imkani (web paritesi)
+                  DropdownButtonFormField<GenerateSource>(
+                    value: state.source,
+                    decoration: const InputDecoration(
+                      labelText: 'Kaynak',
+                      prefixIcon: Icon(Icons.input_outlined),
+                    ),
+                    items: const [
+                      DropdownMenuItem(
+                          value: GenerateSource.auto,
+                          child: Text('Otomatik')),
+                      DropdownMenuItem(
+                          value: GenerateSource.text,
+                          child: Text('Metin katmanı')),
+                      DropdownMenuItem(
+                          value: GenerateSource.ocr, child: Text('OCR')),
+                    ],
+                    onChanged: (v) {
+                      if (v != null) {
+                        context.read<GenerateCubit>().setSource(v);
+                      }
+                    },
                   ),
                   const SizedBox(height: 14),
                   TextFormField(
                     controller: _count,
                     keyboardType: TextInputType.number,
                     decoration: InputDecoration(
-                      labelText: isCards ? 'En fazla kart sayisi' : 'Soru sayisi',
+                      labelText: isCards ? 'En fazla kart sayısı' : 'Soru sayısı',
                       prefixIcon: const Icon(Icons.numbers),
                     ),
                     validator: (v) {
                       final n = int.tryParse(v?.trim() ?? '');
                       final maxN = isCards ? 120 : 40;
                       if (n == null || n < 1 || n > maxN) {
-                        return '1-$maxN arasi bir sayi girin';
+                        return '1-$maxN arası bir sayı girin';
                       }
                       return null;
                     },
@@ -171,8 +213,9 @@ class _WizardBodyState extends State<_WizardBody> {
                   TextFormField(
                     controller: _title,
                     decoration: InputDecoration(
-                      labelText:
-                          isCards ? 'Deste basligi (istege bagli)' : 'Quiz basligi (istege bagli)',
+                      labelText: isCards
+                          ? 'Deste başlığı (isteğe bağlı)'
+                          : 'Quiz başlığı (isteğe bağlı)',
                       prefixIcon: const Icon(Icons.title),
                     ),
                   ),
@@ -180,9 +223,9 @@ class _WizardBodyState extends State<_WizardBody> {
                   SwitchListTile(
                     value: _enhance,
                     onChanged: (v) => setState(() => _enhance = v),
-                    title: const Text('Gemini ile zenginlestir'),
+                    title: const Text('Gemini ile zenginleştir'),
                     subtitle: const Text(
-                        'Daha tutarli ve klinik odakli sorular icin onerilir.'),
+                        'Daha tutarlı ve klinik odaklı içerik için önerilir.'),
                     secondary:
                         const Icon(Icons.auto_awesome, color: AppColors.teal),
                     contentPadding: EdgeInsets.zero,
@@ -200,12 +243,12 @@ class _WizardBodyState extends State<_WizardBody> {
                           )
                         : const Icon(Icons.play_arrow),
                     label: Text(state.submitting
-                        ? 'Baslatiliyor...'
-                        : (isCards ? 'Kart Uret' : 'Quiz Uret')),
+                        ? 'Başlatılıyor...'
+                        : (isCards ? 'Kart Üret' : 'Quiz Üret')),
                   ),
                   const SizedBox(height: 8),
                   const Text(
-                    'Uretim arka planda calisir; detay ekraninda ilerlemeyi gorebilirsiniz.',
+                    'Üretim arka planda çalışır; detay ekranında ilerlemeyi görebilirsiniz.',
                     textAlign: TextAlign.center,
                     style: TextStyle(fontSize: 12, color: Colors.blueGrey),
                   ),

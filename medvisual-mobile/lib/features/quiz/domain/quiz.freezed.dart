@@ -15,7 +15,8 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$Quiz {
 
- String get id; String get title; String get status; String? get error; String? get documentId; int get questionCount; List<QuizQuestion> get questions; DateTime? get createdAt;
+ String get id;// DB'de title nullable; null gelirse liste cokmesin diye varsayilan
+@JsonKey(defaultValue: 'Quiz') String get title; String get status; String? get error; String? get documentId; int get questionCount; List<QuizQuestion> get questions; DateTime? get createdAt;
 /// Create a copy of Quiz
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -48,7 +49,7 @@ abstract mixin class $QuizCopyWith<$Res>  {
   factory $QuizCopyWith(Quiz value, $Res Function(Quiz) _then) = _$QuizCopyWithImpl;
 @useResult
 $Res call({
- String id, String title, String status, String? error, String? documentId, int questionCount, List<QuizQuestion> questions, DateTime? createdAt
+ String id,@JsonKey(defaultValue: 'Quiz') String title, String status, String? error, String? documentId, int questionCount, List<QuizQuestion> questions, DateTime? createdAt
 });
 
 
@@ -160,7 +161,7 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String title,  String status,  String? error,  String? documentId,  int questionCount,  List<QuizQuestion> questions,  DateTime? createdAt)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id, @JsonKey(defaultValue: 'Quiz')  String title,  String status,  String? error,  String? documentId,  int questionCount,  List<QuizQuestion> questions,  DateTime? createdAt)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _Quiz() when $default != null:
 return $default(_that.id,_that.title,_that.status,_that.error,_that.documentId,_that.questionCount,_that.questions,_that.createdAt);case _:
@@ -181,7 +182,7 @@ return $default(_that.id,_that.title,_that.status,_that.error,_that.documentId,_
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String title,  String status,  String? error,  String? documentId,  int questionCount,  List<QuizQuestion> questions,  DateTime? createdAt)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id, @JsonKey(defaultValue: 'Quiz')  String title,  String status,  String? error,  String? documentId,  int questionCount,  List<QuizQuestion> questions,  DateTime? createdAt)  $default,) {final _that = this;
 switch (_that) {
 case _Quiz():
 return $default(_that.id,_that.title,_that.status,_that.error,_that.documentId,_that.questionCount,_that.questions,_that.createdAt);case _:
@@ -201,7 +202,7 @@ return $default(_that.id,_that.title,_that.status,_that.error,_that.documentId,_
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String title,  String status,  String? error,  String? documentId,  int questionCount,  List<QuizQuestion> questions,  DateTime? createdAt)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id, @JsonKey(defaultValue: 'Quiz')  String title,  String status,  String? error,  String? documentId,  int questionCount,  List<QuizQuestion> questions,  DateTime? createdAt)?  $default,) {final _that = this;
 switch (_that) {
 case _Quiz() when $default != null:
 return $default(_that.id,_that.title,_that.status,_that.error,_that.documentId,_that.questionCount,_that.questions,_that.createdAt);case _:
@@ -216,11 +217,12 @@ return $default(_that.id,_that.title,_that.status,_that.error,_that.documentId,_
 @JsonSerializable()
 
 class _Quiz extends Quiz {
-  const _Quiz({required this.id, required this.title, required this.status, this.error, this.documentId, this.questionCount = 0, final  List<QuizQuestion> questions = const <QuizQuestion>[], this.createdAt}): _questions = questions,super._();
+  const _Quiz({required this.id, @JsonKey(defaultValue: 'Quiz') required this.title, required this.status, this.error, this.documentId, this.questionCount = 0, final  List<QuizQuestion> questions = const <QuizQuestion>[], this.createdAt}): _questions = questions,super._();
   factory _Quiz.fromJson(Map<String, dynamic> json) => _$QuizFromJson(json);
 
 @override final  String id;
-@override final  String title;
+// DB'de title nullable; null gelirse liste cokmesin diye varsayilan
+@override@JsonKey(defaultValue: 'Quiz') final  String title;
 @override final  String status;
 @override final  String? error;
 @override final  String? documentId;
@@ -267,7 +269,7 @@ abstract mixin class _$QuizCopyWith<$Res> implements $QuizCopyWith<$Res> {
   factory _$QuizCopyWith(_Quiz value, $Res Function(_Quiz) _then) = __$QuizCopyWithImpl;
 @override @useResult
 $Res call({
- String id, String title, String status, String? error, String? documentId, int questionCount, List<QuizQuestion> questions, DateTime? createdAt
+ String id,@JsonKey(defaultValue: 'Quiz') String title, String status, String? error, String? documentId, int questionCount, List<QuizQuestion> questions, DateTime? createdAt
 });
 
 

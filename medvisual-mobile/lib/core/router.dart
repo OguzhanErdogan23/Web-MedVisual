@@ -130,8 +130,10 @@ GoRouter createRouter({bool tourDone = true}) {
                 GoRoute(
                   path: 'oturum',
                   parentNavigatorKey: _rootNavigatorKey,
-                  builder: (context, state) =>
-                      StudyScreen(setId: state.uri.queryParameters['setId']),
+                  builder: (context, state) => StudyScreen(
+                    setId: state.uri.queryParameters['setId'],
+                    cram: state.uri.queryParameters['mode'] == 'cram',
+                  ),
                 ),
               ],
             ),
@@ -193,7 +195,7 @@ class HomeShell extends StatelessWidget {
           NavigationDestination(
             icon: Icon(Icons.school_outlined),
             selectedIcon: Icon(Icons.school),
-            label: 'Calis',
+            label: 'Çalış',
           ),
         ],
       ),

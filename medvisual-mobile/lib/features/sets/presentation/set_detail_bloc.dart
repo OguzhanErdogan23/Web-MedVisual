@@ -24,11 +24,18 @@ final class _SetDetailPolled extends SetDetailEvent {
 }
 
 final class CardEditSubmitted extends SetDetailEvent {
-  const CardEditSubmitted(this.cardId, {required this.front, required this.back});
+  const CardEditSubmitted(
+    this.cardId, {
+    required this.front,
+    required this.back,
+    this.term,
+  });
 
   final String cardId;
   final String front;
   final String back;
+  /// Bos string = terimi temizle; null = degistirme.
+  final String? term;
 }
 
 final class CardDeleteRequested extends SetDetailEvent {
@@ -119,10 +126,16 @@ class SetDetailBloc extends Bloc<SetDetailEvent, SetDetailState> {
   Future<void> _onCardEdit(
       CardEditSubmitted event, Emitter<SetDetailState> emit) async {
     try {
-      final updated = await _repo.updateCard(event.cardId,
-          front: event.front, back: event.back);
+      final term = event.term;
+      final updated = await _repo.updateCard(
+        event.cardId,
+        front: event.front,
+        back: event.back,
+        term: term,
+        clearTerm: term != null && term.isEmpty,
+      );
       _replaceCard(emit, updated);
-      _notify(emit, 'Kart guncellendi.');
+      _notify(emit, 'Kart güncellendi.');
     } on ApiException catch (e) {
       _notify(emit, e.message);
     }

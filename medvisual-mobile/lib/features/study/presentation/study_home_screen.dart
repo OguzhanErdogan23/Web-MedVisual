@@ -4,16 +4,17 @@ import 'package:go_router/go_router.dart';
 
 import '../../../core/theme.dart';
 import '../../../core/widgets.dart';
+import 'study_heatmap.dart';
 import 'study_home_cubit.dart';
 
-/// Calis: deste secici (veya tum vadesi gelen kartlar).
+/// Calis: deste secici (veya tum vadesi gelen kartlar) + isi haritasi.
 class StudyHomeScreen extends StatelessWidget {
   const StudyHomeScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Calis')),
+      appBar: AppBar(title: const Text('Çalış')),
       body: BlocBuilder<StudyHomeCubit, StudyHomeState>(
         builder: (context, state) {
           if (state.status == ViewStatus.loading ||
@@ -22,10 +23,11 @@ class StudyHomeScreen extends StatelessWidget {
           }
           if (state.status == ViewStatus.failure) {
             return ErrorView(
-              message: state.error ?? 'Calisma verileri yuklenemedi.',
+              message: state.error ?? 'Çalışma verileri yüklenemedi.',
               onRetry: () => context.read<StudyHomeCubit>().load(),
             );
           }
+          final hasCards = state.sets.isNotEmpty;
           return RefreshIndicator(
             onRefresh: () => context.read<StudyHomeCubit>().load(),
             child: ListView(
@@ -39,7 +41,7 @@ class StudyHomeScreen extends StatelessWidget {
                       child: Icon(Icons.all_inclusive,
                           color: AppColors.indigo),
                     ),
-                    title: const Text('Tum desteler',
+                    title: const Text('Tüm desteler',
                         style: TextStyle(fontWeight: FontWeight.w700)),
                     subtitle: Text(
                         '${state.totalDue} kart vadesi geldi • ${state.newCount} yeni'),
@@ -55,9 +57,37 @@ class StudyHomeScreen extends StatelessWidget {
                         : null,
                   ),
                 ),
+                // Serbest mod: vadesi gelmemis kartlarla da pratik
+                Card(
+                  child: ListTile(
+                    leading: const CircleAvatar(
+                      backgroundColor: Color(0xFFE0F2F1),
+                      child: Icon(Icons.casino_outlined,
+                          color: AppColors.teal),
+                    ),
+                    title: const Text('Serbest çalışma',
+                        style: TextStyle(fontWeight: FontWeight.w700)),
+                    subtitle: const Text(
+                        'Tüm kartlarla pratik — zamanlama etkilenmez'),
+                    trailing: const Icon(Icons.chevron_right),
+                    onTap: hasCards
+                        ? () async {
+                            await context.push('/calis/oturum?mode=cram');
+                            if (context.mounted) {
+                              context.read<StudyHomeCubit>().load();
+                            }
+                          }
+                        : null,
+                  ),
+                ),
+                if (state.history != null)
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 8),
+                    child: StudyHeatmap(history: state.history!),
+                  ),
                 Padding(
                   padding: const EdgeInsets.fromLTRB(20, 16, 20, 4),
-                  child: Text('Desteye gore calis',
+                  child: Text('Desteye göre çalış',
                       style: Theme.of(context)
                           .textTheme
                           .titleMedium
@@ -68,9 +98,9 @@ class StudyHomeScreen extends StatelessWidget {
                     padding: EdgeInsets.only(top: 32),
                     child: EmptyView(
                       icon: Icons.school_outlined,
-                      title: 'Calisilacak deste yok',
+                      title: 'Çalışılacak deste yok',
                       subtitle:
-                          'Once panelden bir dokumandan kart destesi uretin.',
+                          'Önce panelden bir dokümandan kart destesi üretin.',
                     ),
                   )
                 else
@@ -84,7 +114,24 @@ class StudyHomeScreen extends StatelessWidget {
                         title: Text(s.title,
                             maxLines: 2, overflow: TextOverflow.ellipsis),
                         subtitle: Text('${s.cardCount} kart'),
-                        trailing: const Icon(Icons.chevron_right),
+                        trailing: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            IconButton(
+                              tooltip: 'Serbest çalış (zamanlama etkilenmez)',
+                              icon: const Icon(Icons.casino_outlined,
+                                  color: AppColors.teal),
+                              onPressed: () async {
+                                await context.push(
+                                    '/calis/oturum?setId=${s.id}&mode=cram');
+                                if (context.mounted) {
+                                  context.read<StudyHomeCubit>().load();
+                                }
+                              },
+                            ),
+                            const Icon(Icons.chevron_right),
+                          ],
+                        ),
                         onTap: () async {
                           await context.push('/calis/oturum?setId=${s.id}');
                           if (context.mounted) {

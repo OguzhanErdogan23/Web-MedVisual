@@ -36,7 +36,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Kayit Ol')),
+      appBar: AppBar(title: const Text('Kayıt Ol')),
       body: BlocListener<AuthCubit, AuthState>(
         listenWhen: (prev, curr) =>
             prev.error != curr.error || prev.info != curr.info,
@@ -76,7 +76,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         prefixIcon: Icon(Icons.mail_outline),
                       ),
                       validator: (v) => (v == null || !v.contains('@'))
-                          ? 'Gecerli bir e-posta girin'
+                          ? 'Geçerli bir e-posta girin'
                           : null,
                     ),
                     const SizedBox(height: 14),
@@ -84,11 +84,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       controller: _password,
                       obscureText: true,
                       decoration: const InputDecoration(
-                        labelText: 'Sifre',
+                        labelText: 'Şifre',
                         prefixIcon: Icon(Icons.lock_outline),
                       ),
                       validator: (v) => (v == null || v.length < 6)
-                          ? 'Sifre en az 6 karakter olmali'
+                          ? 'Şifre en az 6 karakter olmalı'
                           : null,
                     ),
                     const SizedBox(height: 14),
@@ -96,12 +96,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       controller: _password2,
                       obscureText: true,
                       decoration: const InputDecoration(
-                        labelText: 'Sifre (tekrar)',
+                        labelText: 'Şifre (tekrar)',
                         prefixIcon: Icon(Icons.lock_reset_outlined),
                       ),
                       onFieldSubmitted: (_) => _submit(),
                       validator: (v) =>
-                          v != _password.text ? 'Sifreler eslesmiyor' : null,
+                          v != _password.text ? 'Şifreler eşleşmiyor' : null,
                     ),
                     const SizedBox(height: 22),
                     BlocBuilder<AuthCubit, AuthState>(
@@ -114,13 +114,13 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                 child: CircularProgressIndicator(
                                     strokeWidth: 2, color: Colors.white),
                               )
-                            : const Text('Kayit Ol'),
+                            : const Text('Kayıt Ol'),
                       ),
                     ),
                     const SizedBox(height: 10),
                     TextButton(
                       onPressed: () => context.go('/giris'),
-                      child: const Text('Zaten hesabin var mi? Giris yap'),
+                      child: const Text('Zaten hesabın var mı? Giriş yap'),
                     ),
                   ],
                 ),

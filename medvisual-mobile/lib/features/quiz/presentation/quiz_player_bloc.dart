@@ -50,6 +50,8 @@ abstract class QuizPlayerState with _$QuizPlayerState {
     /// Gecerli soruda secilen sik (null: henuz secilmedi).
     int? selected,
     @Default(0) int score,
+    /// Soru sirasiyla kullanicinin sectigi siklar (sonuc incelemesi icin).
+    @Default(<int>[]) List<int> answers,
     String? error,
   }) = _QuizPlayerState;
 
@@ -69,7 +71,11 @@ class QuizPlayerBloc extends Bloc<QuizPlayerEvent, QuizPlayerState> {
     on<OptionSelected>(_onOptionSelected);
     on<NextQuestionRequested>(_onNext);
     on<QuizRestartRequested>((e, emit) => emit(state.copyWith(
-        phase: QuizPhase.playing, index: 0, selected: null, score: 0)));
+        phase: QuizPhase.playing,
+        index: 0,
+        selected: null,
+        score: 0,
+        answers: const [])));
   }
 
   final QuizzesRepository _repo;
@@ -95,7 +101,7 @@ class QuizPlayerBloc extends Bloc<QuizPlayerEvent, QuizPlayerState> {
         emit(state.copyWith(
           phase: QuizPhase.failure,
           quiz: quiz,
-          error: quiz.error ?? 'Quiz uretimi basarisiz oldu.',
+          error: quiz.error ?? 'Quiz üretimi başarısız oldu.',
         ));
         return;
       }
@@ -125,6 +131,7 @@ class QuizPlayerBloc extends Bloc<QuizPlayerEvent, QuizPlayerState> {
     emit(state.copyWith(
       selected: event.optionIndex,
       score: correct ? state.score + 1 : state.score,
+      answers: [...state.answers, event.optionIndex],
     ));
   }
 

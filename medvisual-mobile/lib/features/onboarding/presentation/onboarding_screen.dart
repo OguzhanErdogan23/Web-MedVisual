@@ -22,7 +22,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       title: 'PDF yukleyin',
       body:
           'Panelden kendi PDF dosyanizi yukleyin ya da kutuphaneden hazir bir '
-          'tip kitabi secin. Dokuman islendikten sonra hazir olur.',
+          'tıp kitabı seçin. Doküman işlendikten sonra hazır olur.',
     ),
     _TourStep(
       icon: Icons.auto_awesome,

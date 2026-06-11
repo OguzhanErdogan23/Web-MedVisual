@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 
 import '../../../core/api_client.dart';
+import '../../../core/offline_cache.dart';
 import '../domain/profile.dart';
 
 /// Profil uclari (GET/PATCH /profile).
@@ -9,10 +10,13 @@ class ProfileRepository {
 
   final Dio _dio;
 
-  Future<Profile> get() => guardApi(() async {
-        final res = await _dio.get<Map<String, dynamic>>('/profile');
-        return Profile.fromJson(res.data!);
-      });
+  Future<Profile> get() async {
+    final data = await cachedJson('profile', () => guardApi(() async {
+          final res = await _dio.get<Map<String, dynamic>>('/profile');
+          return res.data!;
+        }));
+    return Profile.fromJson(data);
+  }
 
   Future<Profile> updateDisplayName(String displayName) => guardApi(() async {
         final res = await _dio.patch<Map<String, dynamic>>(

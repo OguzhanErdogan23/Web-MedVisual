@@ -8,7 +8,7 @@ part of 'quiz.dart';
 
 _Quiz _$QuizFromJson(Map<String, dynamic> json) => _Quiz(
   id: json['id'] as String,
-  title: json['title'] as String,
+  title: json['title'] as String? ?? 'Quiz',
   status: json['status'] as String,
   error: json['error'] as String?,
   documentId: json['document_id'] as String?,

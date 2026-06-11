@@ -36,7 +36,7 @@ class _BooksSheetBody extends StatelessWidget {
       children: [
         Padding(
           padding: const EdgeInsets.fromLTRB(20, 0, 20, 8),
-          child: Text('Kutuphane',
+          child: Text('Kütüphane',
               style: Theme.of(context)
                   .textTheme
                   .titleLarge
@@ -56,7 +56,7 @@ class _BooksSheetBody extends StatelessWidget {
               if (books.isEmpty) {
                 return const EmptyView(
                   icon: Icons.local_library_outlined,
-                  title: 'Kutuphane bos',
+                  title: 'Kütüphane boş',
                   subtitle: 'DIP motorunun books/ klasorune PDF ekleyin.',
                 );
               }
@@ -80,7 +80,7 @@ class _BooksSheetBody extends StatelessWidget {
                         bloc.add(BookLoadRequested(b.name));
                         Navigator.of(context).pop();
                       },
-                      child: const Text('Yukle'),
+                      child: const Text('Yükle'),
                     ),
                   );
                 },

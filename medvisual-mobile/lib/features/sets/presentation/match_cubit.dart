@@ -2,6 +2,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 
 import '../../../core/api_client.dart';
+import '../../../core/safe_emit.dart';
 import '../data/sets_repository.dart';
 import '../domain/candidate.dart';
 import '../domain/flashcard.dart';
@@ -25,7 +26,7 @@ abstract class MatchState with _$MatchState {
 }
 
 /// Kart icin gorsel adaylarini arar ve secileni kalici yapar.
-class MatchCubit extends Cubit<MatchState> {
+class MatchCubit extends Cubit<MatchState> with SafeEmit {
   MatchCubit(this._repo, this.cardId) : super(const MatchState());
 
   final SetsRepository _repo;
@@ -41,13 +42,14 @@ class MatchCubit extends Cubit<MatchState> {
     try {
       final result =
           await _repo.matchCard(cardId, range: range, documentId: documentId);
-      emit(state.copyWith(
+      // Sheet kapatildiysa cubit kapanmistir; emit StateError firlatmasin
+      safeEmit(state.copyWith(
         searching: false,
         searched: true,
         candidates: result.candidates,
       ));
     } on ApiException catch (e) {
-      emit(state.copyWith(searching: false, error: e.message));
+      safeEmit(state.copyWith(searching: false, error: e.message));
     }
   }
 
@@ -59,9 +61,9 @@ class MatchCubit extends Cubit<MatchState> {
         dipDocId: candidate.dipDocId,
         path: candidate.path,
       );
-      emit(state.copyWith(selectingPath: null, selectedCard: card));
+      safeEmit(state.copyWith(selectingPath: null, selectedCard: card));
     } on ApiException catch (e) {
-      emit(state.copyWith(selectingPath: null, error: e.message));
+      safeEmit(state.copyWith(selectingPath: null, error: e.message));
     }
   }
 }

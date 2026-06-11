@@ -2,8 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../../../core/safe_emit.dart';
+
 /// Tema modunu (acik/koyu/sistem) yonetir ve shared_preferences'a kaydeder.
-class ThemeCubit extends Cubit<ThemeMode> {
+class ThemeCubit extends Cubit<ThemeMode> with SafeEmit {
   ThemeCubit() : super(ThemeMode.system) {
     _restore();
   }
@@ -13,7 +15,7 @@ class ThemeCubit extends Cubit<ThemeMode> {
   Future<void> _restore() async {
     final prefs = await SharedPreferences.getInstance();
     final stored = prefs.getString(_prefsKey);
-    emit(_decode(stored));
+    safeEmit(_decode(stored));
   }
 
   Future<void> setMode(ThemeMode mode) async {

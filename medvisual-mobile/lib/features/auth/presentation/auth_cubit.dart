@@ -48,7 +48,7 @@ class AuthCubit extends Cubit<AuthState> {
       emit(state.copyWith(busy: false, error: _trAuthError(e)));
     } catch (_) {
       emit(state.copyWith(
-          busy: false, error: 'Giris yapilamadi. Baglantiyi kontrol edin.'));
+          busy: false, error: 'Giriş yapılamadı. Bağlantıyı kontrol edin.'));
     }
   }
 
@@ -59,14 +59,14 @@ class AuthCubit extends Cubit<AuthState> {
       emit(state.copyWith(
         busy: false,
         info: res.session == null
-            ? 'Kayit alindi. E-postanizdaki dogrulama baglantisini onaylayin.'
+            ? 'Kayıt alındı. E-postanızdaki doğrulama bağlantısını onaylayın.'
             : null,
       ));
     } on AuthException catch (e) {
       emit(state.copyWith(busy: false, error: _trAuthError(e)));
     } catch (_) {
       emit(state.copyWith(
-          busy: false, error: 'Kayit yapilamadi. Baglantiyi kontrol edin.'));
+          busy: false, error: 'Kayıt yapılamadı. Bağlantıyı kontrol edin.'));
     }
   }
 
@@ -87,15 +87,15 @@ class AuthCubit extends Cubit<AuthState> {
       return 'Bu e-posta zaten kayitli.';
     }
     if (msg.contains('password should be at least')) {
-      return 'Sifre en az 6 karakter olmali.';
+      return 'Şifre en az 6 karakter olmalı.';
     }
     if (msg.contains('email not confirmed')) {
       return 'E-posta henuz dogrulanmamis. Gelen kutunuzu kontrol edin.';
     }
     if (msg.contains('invalid email') || msg.contains('validate email')) {
-      return 'Gecersiz e-posta adresi.';
+      return 'Geçersiz e-posta adresi.';
     }
-    return 'Islem basarisiz: ${e.message}';
+    return 'İşlem başarısız: ${e.message}';
   }
 
   @override

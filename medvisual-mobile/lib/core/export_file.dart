@@ -23,10 +23,16 @@ class ExportFile {
 String filenameFromResponse(Response<dynamic> res, {required String fallback}) {
   final disposition = res.headers.value('content-disposition');
   if (disposition != null) {
-    final match = RegExp(r'filename\*?=(?:UTF-8'')?"?([^";]+)"?')
+    // NOT: raw tek-tirnakli string icine '' yazilamadigindan (Dart bitisik
+    // iki literal olarak birlestirir) pattern cift tirnakli yazildi; aksi
+    // halde RFC 5987 "UTF-8''ad" bicimindeki kesme isaretleri ada dahil olur.
+    final match = RegExp("filename\\*?=(?:UTF-8'')?\"?([^\";]+)\"?")
         .firstMatch(disposition);
-    final name = match?.group(1)?.trim();
-    if (name != null && name.isNotEmpty) return Uri.decodeFull(name);
+    var name = match?.group(1)?.trim();
+    if (name != null) {
+      name = name.replaceFirst(RegExp("^'+"), '');
+      if (name.isNotEmpty) return Uri.decodeFull(name);
+    }
   }
   return fallback;
 }

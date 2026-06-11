@@ -80,7 +80,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         prefixIcon: Icon(Icons.mail_outline),
                       ),
                       validator: (v) => (v == null || !v.contains('@'))
-                          ? 'Gecerli bir e-posta girin'
+                          ? 'Geçerli bir e-posta girin'
                           : null,
                     ),
                     const SizedBox(height: 14),
@@ -89,12 +89,12 @@ class _LoginScreenState extends State<LoginScreen> {
                       obscureText: true,
                       autofillHints: const [AutofillHints.password],
                       decoration: const InputDecoration(
-                        labelText: 'Sifre',
+                        labelText: 'Şifre',
                         prefixIcon: Icon(Icons.lock_outline),
                       ),
                       onFieldSubmitted: (_) => _submit(),
                       validator: (v) => (v == null || v.length < 6)
-                          ? 'Sifre en az 6 karakter olmali'
+                          ? 'Şifre en az 6 karakter olmalı'
                           : null,
                     ),
                     const SizedBox(height: 22),
@@ -108,13 +108,13 @@ class _LoginScreenState extends State<LoginScreen> {
                                 child: CircularProgressIndicator(
                                     strokeWidth: 2, color: Colors.white),
                               )
-                            : const Text('Giris Yap'),
+                            : const Text('Giriş Yap'),
                       ),
                     ),
                     const SizedBox(height: 10),
                     TextButton(
                       onPressed: () => context.go('/kayit'),
-                      child: const Text('Hesabin yok mu? Kayit ol'),
+                      child: const Text('Hesabın yok mu? Kayıt ol'),
                     ),
                   ],
                 ),

@@ -107,7 +107,7 @@ class _ProfileSectionState extends State<_ProfileSection> {
           return Padding(
             padding: const EdgeInsets.symmetric(vertical: 24),
             child: ErrorView(
-              message: state.error ?? 'Profil yuklenemedi.',
+              message: state.error ?? 'Profil yüklenemedi.',
               onRetry: () => context.read<SettingsCubit>().load(),
             ),
           );
@@ -227,7 +227,7 @@ class _AccountSection extends StatelessWidget {
     final ok = await showDialog<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        title: const Text('Sifre Degistir'),
+        title: const Text('Şifre Değiştir'),
         content: Form(
           key: formKey,
           child: Column(
@@ -236,18 +236,19 @@ class _AccountSection extends StatelessWidget {
               TextFormField(
                 controller: pw,
                 obscureText: true,
-                decoration: const InputDecoration(labelText: 'Yeni sifre'),
+                decoration: const InputDecoration(labelText: 'Yeni şifre'),
                 validator: (v) => (v == null || v.length < 6)
-                    ? 'En az 6 karakter olmali'
+                    ? 'En az 6 karakter olmalı'
                     : null,
               ),
               const SizedBox(height: 10),
               TextFormField(
                 controller: pw2,
                 obscureText: true,
-                decoration: const InputDecoration(labelText: 'Yeni sifre (tekrar)'),
+                decoration:
+                    const InputDecoration(labelText: 'Yeni şifre (tekrar)'),
                 validator: (v) =>
-                    v != pw.text ? 'Sifreler eslesmiyor' : null,
+                    v != pw.text ? 'Şifreler eşleşmiyor' : null,
               ),
             ],
           ),
@@ -255,7 +256,7 @@ class _AccountSection extends StatelessWidget {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(dialogContext, false),
-            child: const Text('Vazgec'),
+            child: const Text('Vazgeç'),
           ),
           FilledButton(
             onPressed: () {
@@ -263,12 +264,15 @@ class _AccountSection extends StatelessWidget {
                 Navigator.pop(dialogContext, true);
               }
             },
-            child: const Text('Degistir'),
+            child: const Text('Değiştir'),
           ),
         ],
       ),
     );
-    if (ok == true) cubit.changePassword(pw.text);
+    final password = pw.text;
+    pw.dispose();
+    pw2.dispose();
+    if (ok == true) await cubit.changePassword(password);
   }
 
   Future<void> _signOut(BuildContext context) async {
@@ -276,17 +280,17 @@ class _AccountSection extends StatelessWidget {
     final ok = await showDialog<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        title: const Text('Cikis yapilsin mi?'),
-        content: const Text('Hesabinizdan cikis yapacaksiniz.'),
+        title: const Text('Çıkış yapılsın mı?'),
+        content: const Text('Hesabınızdan çıkış yapacaksınız.'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(dialogContext, false),
-            child: const Text('Vazgec'),
+            child: const Text('Vazgeç'),
           ),
           FilledButton(
             style: FilledButton.styleFrom(backgroundColor: AppColors.danger),
             onPressed: () => Navigator.pop(dialogContext, true),
-            child: const Text('Cikis Yap'),
+            child: const Text('Çıkış Yap'),
           ),
         ],
       ),
@@ -302,12 +306,12 @@ class _AccountSection extends StatelessWidget {
         const _SectionHeader('Hesap'),
         ListTile(
           leading: const Icon(Icons.password_outlined),
-          title: const Text('Sifre Degistir'),
+          title: const Text('Şifre Değiştir'),
           onTap: () => _changePassword(context),
         ),
         ListTile(
           leading: const Icon(Icons.logout, color: AppColors.danger),
-          title: const Text('Cikis Yap',
+          title: const Text('Çıkış Yap',
               style: TextStyle(color: AppColors.danger)),
           onTap: () => _signOut(context),
         ),

@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 
 import '../../../core/api_client.dart';
+import '../../../core/offline_cache.dart';
 import '../domain/document.dart';
 
 /// Dokuman + kutuphane uclari. Tum metodlar freezed model dondurur,
@@ -10,12 +11,16 @@ class DocumentsRepository {
 
   final Dio _dio;
 
-  Future<List<Document>> list() => guardApi(() async {
-        final res = await _dio.get<Map<String, dynamic>>('/documents');
-        final items = (res.data?['documents'] as List? ?? const [])
-            .cast<Map<String, dynamic>>();
-        return items.map(Document.fromJson).toList(growable: false);
-      });
+  Future<List<Document>> list() async {
+    // Cevrimdisi: son basarili liste cache'ten doner
+    final data = await cachedJson('documents', () => guardApi(() async {
+          final res = await _dio.get<Map<String, dynamic>>('/documents');
+          return res.data ?? const <String, dynamic>{};
+        }));
+    final items =
+        (data['documents'] as List? ?? const []).cast<Map<String, dynamic>>();
+    return items.map(Document.fromJson).toList(growable: false);
+  }
 
   Future<Document> getById(String id) => guardApi(() async {
         final res = await _dio.get<Map<String, dynamic>>('/documents/$id');

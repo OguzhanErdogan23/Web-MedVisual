@@ -2,6 +2,7 @@ import 'package:dio/dio.dart';
 
 import '../../../core/api_client.dart';
 import '../../../core/export_file.dart';
+import '../../../core/offline_cache.dart';
 import '../domain/candidate.dart';
 import '../domain/card_set.dart';
 import '../domain/flashcard.dart';
@@ -12,16 +13,34 @@ class SetsRepository {
 
   final Dio _dio;
 
-  Future<List<CardSet>> list() => guardApi(() async {
-        final res = await _dio.get<Map<String, dynamic>>('/sets');
-        final items =
-            (res.data?['sets'] as List? ?? const []).cast<Map<String, dynamic>>();
-        return items.map(CardSet.fromJson).toList(growable: false);
-      });
+  Future<List<CardSet>> list() async {
+    final data = await cachedJson('sets', () => guardApi(() async {
+          final res = await _dio.get<Map<String, dynamic>>('/sets');
+          return res.data ?? const <String, dynamic>{};
+        }));
+    final items =
+        (data['sets'] as List? ?? const []).cast<Map<String, dynamic>>();
+    return items.map(CardSet.fromJson).toList(growable: false);
+  }
 
   /// Set + kartlari (istemci `generating` durumunu burada poll'lar).
-  Future<CardSet> getById(String id) => guardApi(() async {
-        final res = await _dio.get<Map<String, dynamic>>('/sets/$id');
+  /// Cevrimdisi: daha once acilan deste kartlariyla birlikte cache'ten doner.
+  Future<CardSet> getById(String id) async {
+    final data = await cachedJson('set.$id', () => guardApi(() async {
+          final res = await _dio.get<Map<String, dynamic>>('/sets/$id');
+          return res.data!;
+        }));
+    return CardSet.fromJson(data);
+  }
+
+  /// Bos deste olusturur (elle kart eklemek icin — web '+ Yeni Deste' paritesi).
+  Future<CardSet> create({required String title, String? description}) =>
+      guardApi(() async {
+        final res = await _dio.post<Map<String, dynamic>>('/sets', data: {
+          'title': title,
+          if (description != null && description.isNotEmpty)
+            'description': description,
+        });
         return CardSet.fromJson(res.data!);
       });
 
@@ -69,12 +88,23 @@ class SetsRepository {
         return Flashcard.fromJson(res.data!);
       });
 
-  Future<Flashcard> updateCard(String cardId, {String? front, String? back}) =>
+  /// [clearTerm] true ise term alani sunucuda null'a cekilir (temizleme).
+  Future<Flashcard> updateCard(
+    String cardId, {
+    String? front,
+    String? back,
+    String? term,
+    bool clearTerm = false,
+  }) =>
       guardApi(() async {
         final res =
             await _dio.patch<Map<String, dynamic>>('/cards/$cardId', data: {
           if (front != null) 'front': front,
           if (back != null) 'back': back,
+          if (clearTerm)
+            'term': null
+          else if (term != null && term.isNotEmpty)
+            'term': term,
         });
         return Flashcard.fromJson(res.data!);
       });
@@ -91,12 +121,16 @@ class SetsRepository {
     String? term,
   }) =>
       guardApi(() async {
-        final res = await _dio
-            .post<Map<String, dynamic>>('/cards/$cardId/match', data: {
-          'range': range,
-          if (documentId != null) 'document_id': documentId,
-          if (term != null && term.isNotEmpty) 'term': term,
-        });
+        final res = await _dio.post<Map<String, dynamic>>(
+          '/cards/$cardId/match',
+          data: {
+            'range': range,
+            if (documentId != null) 'document_id': documentId,
+            if (term != null && term.isNotEmpty) 'term': term,
+          },
+          // OCR'li genis aramalar 5 dk'yi asabilir (backend 30 dk'ya izinli)
+          options: longReceiveOptions(),
+        );
         return MatchResult.fromJson(res.data!);
       });
 

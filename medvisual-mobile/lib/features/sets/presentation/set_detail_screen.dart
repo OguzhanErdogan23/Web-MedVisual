@@ -56,13 +56,13 @@ class _SetDetailBody extends StatelessWidget {
               controller: front,
               autofocus: true,
               maxLines: 2,
-              decoration: const InputDecoration(labelText: 'On yuz (soru)'),
+              decoration: const InputDecoration(labelText: 'Ön yüz (soru)'),
             ),
             const SizedBox(height: 10),
             TextField(
               controller: back,
               maxLines: 3,
-              decoration: const InputDecoration(labelText: 'Arka yuz (cevap)'),
+              decoration: const InputDecoration(labelText: 'Arka yüz (cevap)'),
             ),
             const SizedBox(height: 10),
             TermAutocompleteField(controller: term, options: terms.cached),
@@ -71,7 +71,7 @@ class _SetDetailBody extends StatelessWidget {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(dialogContext, false),
-            child: const Text('Vazgec'),
+            child: const Text('Vazgeç'),
           ),
           FilledButton(
             onPressed: () => Navigator.pop(dialogContext, true),
@@ -80,12 +80,21 @@ class _SetDetailBody extends StatelessWidget {
         ],
       ),
     );
-    if (ok == true && front.text.trim().isNotEmpty) {
+    final frontText = front.text.trim();
+    final backText = back.text.trim();
+    final termText = term.text.trim();
+    front.dispose();
+    back.dispose();
+    term.dispose();
+    // Web ile ayni kural: on VE arka yuz zorunlu (bos cevapli kart olmasin)
+    if (ok == true && frontText.isNotEmpty && backText.isNotEmpty) {
       bloc.add(CardAddSubmitted(
-        front: front.text.trim(),
-        back: back.text.trim(),
-        term: term.text.trim().isEmpty ? null : term.text.trim(),
+        front: frontText,
+        back: backText,
+        term: termText.isEmpty ? null : termText,
       ));
+    } else if (ok == true && context.mounted) {
+      showSnack(context, 'Ön yüz ve arka yüz boş bırakılamaz.');
     }
   }
 
@@ -125,7 +134,7 @@ class _SetDetailBody extends StatelessWidget {
             children: [
               const Padding(
                 padding: EdgeInsets.all(16),
-                child: Text('Gorsel kaynagi dokumani secin',
+                child: Text('Görsel kaynağı dokümanını seçin',
                     style: TextStyle(fontWeight: FontWeight.w700)),
               ),
               for (final d in readyDocs)
@@ -146,18 +155,18 @@ class _SetDetailBody extends StatelessWidget {
     final ok = await showDialog<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        title: const Text('Toplu gorsel uretilsin mi?'),
+        title: const Text('Toplu görsel üretilsin mi?'),
         content: const Text(
-            'Gorseli olmayan tum kartlar icin DIP motorundan otomatik '
-            'gorsel aranacak. Bu islem birkac dakika surebilir.'),
+            'Görseli olmayan tüm kartlar için DIP motorundan otomatik '
+            'görsel aranacak. Bu işlem birkaç dakika sürebilir.'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(dialogContext, false),
-            child: const Text('Vazgec'),
+            child: const Text('Vazgeç'),
           ),
           FilledButton(
             onPressed: () => Navigator.pop(dialogContext, true),
-            child: const Text('Baslat'),
+            child: const Text('Başlat'),
           ),
         ],
       ),
@@ -183,10 +192,17 @@ class _SetDetailBody extends StatelessWidget {
             actions: [
               if (set != null && set.isReady && set.cards.isNotEmpty)
                 IconButton(
-                  tooltip: 'Bu desteyle calis',
+                  tooltip: 'Bu desteyle çalış',
                   icon: const Icon(Icons.school_outlined),
                   onPressed: () =>
                       context.push('/calis/oturum?setId=${set.id}'),
+                ),
+              if (set != null && set.isReady && set.cards.isNotEmpty)
+                IconButton(
+                  tooltip: 'Serbest çalış (zamanlama etkilenmez)',
+                  icon: const Icon(Icons.casino_outlined),
+                  onPressed: () => context
+                      .push('/calis/oturum?setId=${set.id}&mode=cram'),
                 ),
               if (set != null && set.isReady && set.cards.isNotEmpty)
                 IconButton(
@@ -224,7 +240,7 @@ class _SetDetailBody extends StatelessWidget {
             ViewStatus.loading =>
               const Center(child: CircularProgressIndicator()),
             ViewStatus.failure => ErrorView(
-                message: state.error ?? 'Deste yuklenemedi.',
+                message: state.error ?? 'Deste yüklenemedi.',
                 onRetry: () => context
                     .read<SetDetailBloc>()
                     .add(const SetDetailStarted()),
@@ -251,12 +267,12 @@ class _SetContent extends StatelessWidget {
           children: [
             CircularProgressIndicator(),
             SizedBox(height: 16),
-            Text('Uretiliyor...',
+            Text('Üretiliyor...',
                 style: TextStyle(
                     fontWeight: FontWeight.w700, color: AppColors.indigo)),
             SizedBox(height: 6),
             Text(
-              'Kartlar hazirlaniyor; bu islem sayfa sayisina gore\nbirkac dakika surebilir.',
+              'Kartlar hazırlanıyor; bu işlem sayfa sayısına göre\nbirkaç dakika sürebilir.',
               textAlign: TextAlign.center,
               style: TextStyle(color: Colors.blueGrey),
             ),
@@ -265,13 +281,13 @@ class _SetContent extends StatelessWidget {
       );
     }
     if (set.status == 'failed') {
-      return ErrorView(message: set.error ?? 'Uretim basarisiz oldu.');
+      return ErrorView(message: set.error ?? 'Üretim başarısız oldu.');
     }
     if (set.cards.isEmpty) {
       return const EmptyView(
         icon: Icons.crop_portrait,
         title: 'Bu destede kart yok',
-        subtitle: 'Sag alttaki + butonuyla elle kart ekleyebilirsiniz.',
+        subtitle: 'Sağ alttaki + butonuyla elle kart ekleyebilirsiniz.',
       );
     }
     return ListView.builder(
@@ -308,32 +324,38 @@ class _FlashcardTileState extends State<_FlashcardTile> {
 
   Future<void> _edit(BuildContext context) async {
     final bloc = context.read<SetDetailBloc>();
+    final terms = context.read<TermsRepository>();
+    unawaited(terms.list().catchError((_) => <String>[]));
     final front = TextEditingController(text: widget.card.front);
     final back = TextEditingController(text: widget.card.back);
+    final term = TextEditingController(text: widget.card.term ?? '');
     final ok = await showDialog<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        title: const Text('Karti duzenle'),
+        title: const Text('Kartı düzenle'),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             TextField(
               controller: front,
               maxLines: 2,
-              decoration: const InputDecoration(labelText: 'On yuz'),
+              decoration: const InputDecoration(labelText: 'Ön yüz'),
             ),
             const SizedBox(height: 10),
             TextField(
               controller: back,
               maxLines: 3,
-              decoration: const InputDecoration(labelText: 'Arka yuz'),
+              decoration: const InputDecoration(labelText: 'Arka yüz'),
             ),
+            const SizedBox(height: 10),
+            // Terim duzenlenebilir (gorsel eslestirmenin anahtari, web paritesi)
+            TermAutocompleteField(controller: term, options: terms.cached),
           ],
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(dialogContext, false),
-            child: const Text('Vazgec'),
+            child: const Text('Vazgeç'),
           ),
           FilledButton(
             onPressed: () => Navigator.pop(dialogContext, true),
@@ -342,12 +364,21 @@ class _FlashcardTileState extends State<_FlashcardTile> {
         ],
       ),
     );
-    if (ok == true) {
+    final frontText = front.text.trim();
+    final backText = back.text.trim();
+    final termText = term.text.trim();
+    front.dispose();
+    back.dispose();
+    term.dispose();
+    if (ok == true && frontText.isNotEmpty && backText.isNotEmpty) {
       bloc.add(CardEditSubmitted(
         widget.card.id,
-        front: front.text.trim(),
-        back: back.text.trim(),
+        front: frontText,
+        back: backText,
+        term: termText, // bos string = terimi temizle
       ));
+    } else if (ok == true && context.mounted) {
+      showSnack(context, 'Ön yüz ve arka yüz boş bırakılamaz.');
     }
   }
 
@@ -371,7 +402,7 @@ class _FlashcardTileState extends State<_FlashcardTile> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(dialogContext, false),
-            child: const Text('Vazgec'),
+            child: const Text('Vazgeç'),
           ),
           FilledButton(
             style: FilledButton.styleFrom(backgroundColor: AppColors.danger),
@@ -398,7 +429,7 @@ class _FlashcardTileState extends State<_FlashcardTile> {
           children: [
             ListTile(
               leading: const Icon(Icons.edit_outlined),
-              title: const Text('Duzenle'),
+              title: const Text('Düzenle'),
               onTap: () {
                 Navigator.pop(sheetContext);
                 _edit(context);
@@ -427,7 +458,7 @@ class _FlashcardTileState extends State<_FlashcardTile> {
               ListTile(
                 leading:
                     const Icon(Icons.image_search, color: AppColors.teal),
-                title: const Text('Gorsel Bul'),
+                title: const Text('Görsel Bul'),
                 onTap: () {
                   Navigator.pop(sheetContext);
                   _findImage(context);
@@ -490,7 +521,7 @@ class _FlashcardTileState extends State<_FlashcardTile> {
                         children: [
                           Expanded(
                             child: Text(
-                              _flipped ? 'ARKA YUZ' : 'ON YUZ',
+                              _flipped ? 'ARKA YÜZ' : 'ÖN YÜZ',
                               style: TextStyle(
                                 fontSize: 10,
                                 fontWeight: FontWeight.w800,

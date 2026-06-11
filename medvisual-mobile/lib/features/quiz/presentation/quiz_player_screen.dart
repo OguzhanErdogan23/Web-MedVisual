@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../../core/theme.dart';
 import '../../../core/widgets.dart';
 import '../data/quizzes_repository.dart';
+import '../domain/quiz.dart';
 import 'quiz_player_bloc.dart';
 
 /// Quiz oynatici: soru, 4 sik, aninda dogru/yanlis boyama, skor ekrani.
@@ -50,13 +51,13 @@ class _PlayerBody extends StatelessWidget {
                   children: [
                     CircularProgressIndicator(),
                     SizedBox(height: 16),
-                    Text('Uretiliyor...',
+                    Text('Üretiliyor...',
                         style: TextStyle(
                             fontWeight: FontWeight.w700,
                             color: AppColors.indigo)),
                     SizedBox(height: 6),
                     Text(
-                      'Sorular hazirlaniyor; bu islem birkac dakika surebilir.',
+                      'Sorular hazırlanıyor; bu işlem birkaç dakika sürebilir.',
                       textAlign: TextAlign.center,
                       style: TextStyle(color: Colors.blueGrey),
                     ),
@@ -64,7 +65,7 @@ class _PlayerBody extends StatelessWidget {
                 ),
               ),
             QuizPhase.failure => ErrorView(
-                message: state.error ?? 'Quiz yuklenemedi.',
+                message: state.error ?? 'Quiz yüklenemedi.',
                 onRetry: () => context
                     .read<QuizPlayerBloc>()
                     .add(const QuizPlayerStarted()),
@@ -93,6 +94,8 @@ class _QuestionView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final quiz = state.quiz!;
     final q = state.currentQuestion!;
     final total = quiz.questions.length;
@@ -120,7 +123,7 @@ class _QuestionView extends StatelessWidget {
               child: LinearProgressIndicator(
                 value: (state.index + (state.answered ? 1 : 0)) / total,
                 minHeight: 6,
-                backgroundColor: const Color(0xFFE3E6F0),
+                backgroundColor: scheme.surfaceContainerHighest,
               ),
             ),
             const SizedBox(height: 20),
@@ -149,10 +152,14 @@ class _QuestionView extends StatelessWidget {
                       alignment: Alignment.centerLeft,
                       padding: const EdgeInsets.symmetric(
                           horizontal: 16, vertical: 14),
+                      // Koyu temada sabit beyaz yerine tema yuzeyi
                       backgroundColor:
-                          color?.withValues(alpha: 0.1) ?? Colors.white,
+                          color?.withValues(alpha: 0.1) ?? scheme.surface,
                       side: BorderSide(
-                        color: color ?? const Color(0xFFD5DAE8),
+                        color: color ??
+                            (isDark
+                                ? scheme.outlineVariant
+                                : const Color(0xFFD5DAE8)),
                         width: color != null ? 1.8 : 1,
                       ),
                       shape: RoundedRectangleBorder(
@@ -185,7 +192,7 @@ class _QuestionView extends StatelessWidget {
                           child: Text(
                             q.options[i],
                             style: TextStyle(
-                              color: Colors.blueGrey.shade900,
+                              color: scheme.onSurface,
                               fontWeight: color != null
                                   ? FontWeight.w700
                                   : FontWeight.w500,
@@ -229,48 +236,140 @@ class _ScoreView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final total = state.quiz?.questions.length ?? 0;
+    final scheme = Theme.of(context).colorScheme;
+    final questions = state.quiz?.questions ?? const [];
+    final total = questions.length;
     final pct = total == 0 ? 0 : (state.score * 100 / total).round();
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
+    return ListView(
+      padding: const EdgeInsets.all(24),
+      children: [
+        Icon(
+          pct >= 70 ? Icons.emoji_events : Icons.sentiment_satisfied_alt,
+          size: 64,
+          color: pct >= 70 ? AppColors.teal : AppColors.warning,
+        ),
+        const SizedBox(height: 12),
+        Text('Quiz tamamlandı!',
+            textAlign: TextAlign.center,
+            style: Theme.of(context)
+                .textTheme
+                .headlineSmall
+                ?.copyWith(fontWeight: FontWeight.w800)),
+        const SizedBox(height: 8),
+        Text(
+          '$total sorudan ${state.score} doğru (%$pct)',
+          textAlign: TextAlign.center,
+          style: TextStyle(fontSize: 16, color: scheme.onSurfaceVariant),
+        ),
+        const SizedBox(height: 24),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(
-              pct >= 70 ? Icons.emoji_events : Icons.sentiment_satisfied_alt,
-              size: 64,
-              color: pct >= 70 ? AppColors.teal : AppColors.warning,
+            OutlinedButton.icon(
+              onPressed: () => context
+                  .read<QuizPlayerBloc>()
+                  .add(const QuizRestartRequested()),
+              icon: const Icon(Icons.replay),
+              label: const Text('Tekrar çöz'),
             ),
-            const SizedBox(height: 12),
-            Text('Quiz tamamlandi!',
-                style: Theme.of(context)
-                    .textTheme
-                    .headlineSmall
-                    ?.copyWith(fontWeight: FontWeight.w800)),
+            const SizedBox(width: 12),
+            FilledButton(
+              onPressed: () => context.pop(),
+              child: const Text('Kapat'),
+            ),
+          ],
+        ),
+        // Soru bazlı inceleme (web paritesi): doğru cevap + kullanıcının yanlışı
+        if (state.answers.length == total && total > 0) ...[
+          const SizedBox(height: 24),
+          Text('Soru incelemesi',
+              style: Theme.of(context)
+                  .textTheme
+                  .titleMedium
+                  ?.copyWith(fontWeight: FontWeight.w700)),
+          const SizedBox(height: 8),
+          for (var i = 0; i < total; i++)
+            _ReviewCard(
+              index: i,
+              question: questions[i],
+              userAnswer: state.answers[i],
+            ),
+        ],
+      ],
+    );
+  }
+}
+
+class _ReviewCard extends StatelessWidget {
+  const _ReviewCard({
+    required this.index,
+    required this.question,
+    required this.userAnswer,
+  });
+
+  final int index;
+  final QuizQuestion question;
+  final int userAnswer;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final correct = userAnswer == question.answerIndex;
+    return Card(
+      margin: const EdgeInsets.only(bottom: 10),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(14),
+        side: BorderSide(
+          color: correct
+              ? AppColors.success.withValues(alpha: 0.4)
+              : AppColors.danger.withValues(alpha: 0.4),
+        ),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(14),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('${index + 1}. ${question.question}',
+                style: const TextStyle(fontWeight: FontWeight.w600)),
             const SizedBox(height: 8),
-            Text(
-              '$total sorudan ${state.score} dogru (%$pct)',
-              style: const TextStyle(fontSize: 16, color: Colors.blueGrey),
-            ),
-            const SizedBox(height: 24),
-            Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                OutlinedButton.icon(
-                  onPressed: () => context
-                      .read<QuizPlayerBloc>()
-                      .add(const QuizRestartRequested()),
-                  icon: const Icon(Icons.replay),
-                  label: const Text('Tekrar coz'),
+            for (var oi = 0; oi < question.options.length; oi++)
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 2),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('${String.fromCharCode(65 + oi)}) ',
+                        style: TextStyle(
+                            fontSize: 13, color: scheme.onSurfaceVariant)),
+                    Expanded(
+                      child: Text(
+                        question.options[oi],
+                        style: TextStyle(
+                          fontSize: 13,
+                          color: oi == question.answerIndex
+                              ? AppColors.success
+                              : (oi == userAnswer
+                                  ? AppColors.danger
+                                  : scheme.onSurfaceVariant),
+                          fontWeight: oi == question.answerIndex
+                              ? FontWeight.w700
+                              : FontWeight.w400,
+                          decoration: (oi == userAnswer && !correct)
+                              ? TextDecoration.lineThrough
+                              : null,
+                        ),
+                      ),
+                    ),
+                    if (oi == question.answerIndex)
+                      const Icon(Icons.check, size: 16,
+                          color: AppColors.success),
+                    if (oi == userAnswer && !correct)
+                      const Icon(Icons.close, size: 16,
+                          color: AppColors.danger),
+                  ],
                 ),
-                const SizedBox(width: 12),
-                FilledButton(
-                  onPressed: () => context.pop(),
-                  child: const Text('Kapat'),
-                ),
-              ],
-            ),
+              ),
           ],
         ),
       ),

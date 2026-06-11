@@ -15,7 +15,8 @@ T _$identity<T>(T value) => value;
 mixin _$QuizPlayerState {
 
  QuizPhase get phase; Quiz? get quiz; int get index;/// Gecerli soruda secilen sik (null: henuz secilmedi).
- int? get selected; int get score; String? get error;
+ int? get selected; int get score;/// Soru sirasiyla kullanicinin sectigi siklar (sonuc incelemesi icin).
+ List<int> get answers; String? get error;
 /// Create a copy of QuizPlayerState
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -26,16 +27,16 @@ $QuizPlayerStateCopyWith<QuizPlayerState> get copyWith => _$QuizPlayerStateCopyW
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is QuizPlayerState&&(identical(other.phase, phase) || other.phase == phase)&&(identical(other.quiz, quiz) || other.quiz == quiz)&&(identical(other.index, index) || other.index == index)&&(identical(other.selected, selected) || other.selected == selected)&&(identical(other.score, score) || other.score == score)&&(identical(other.error, error) || other.error == error));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is QuizPlayerState&&(identical(other.phase, phase) || other.phase == phase)&&(identical(other.quiz, quiz) || other.quiz == quiz)&&(identical(other.index, index) || other.index == index)&&(identical(other.selected, selected) || other.selected == selected)&&(identical(other.score, score) || other.score == score)&&const DeepCollectionEquality().equals(other.answers, answers)&&(identical(other.error, error) || other.error == error));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,phase,quiz,index,selected,score,error);
+int get hashCode => Object.hash(runtimeType,phase,quiz,index,selected,score,const DeepCollectionEquality().hash(answers),error);
 
 @override
 String toString() {
-  return 'QuizPlayerState(phase: $phase, quiz: $quiz, index: $index, selected: $selected, score: $score, error: $error)';
+  return 'QuizPlayerState(phase: $phase, quiz: $quiz, index: $index, selected: $selected, score: $score, answers: $answers, error: $error)';
 }
 
 
@@ -46,7 +47,7 @@ abstract mixin class $QuizPlayerStateCopyWith<$Res>  {
   factory $QuizPlayerStateCopyWith(QuizPlayerState value, $Res Function(QuizPlayerState) _then) = _$QuizPlayerStateCopyWithImpl;
 @useResult
 $Res call({
- QuizPhase phase, Quiz? quiz, int index, int? selected, int score, String? error
+ QuizPhase phase, Quiz? quiz, int index, int? selected, int score, List<int> answers, String? error
 });
 
 
@@ -63,14 +64,15 @@ class _$QuizPlayerStateCopyWithImpl<$Res>
 
 /// Create a copy of QuizPlayerState
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? phase = null,Object? quiz = freezed,Object? index = null,Object? selected = freezed,Object? score = null,Object? error = freezed,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? phase = null,Object? quiz = freezed,Object? index = null,Object? selected = freezed,Object? score = null,Object? answers = null,Object? error = freezed,}) {
   return _then(_self.copyWith(
 phase: null == phase ? _self.phase : phase // ignore: cast_nullable_to_non_nullable
 as QuizPhase,quiz: freezed == quiz ? _self.quiz : quiz // ignore: cast_nullable_to_non_nullable
 as Quiz?,index: null == index ? _self.index : index // ignore: cast_nullable_to_non_nullable
 as int,selected: freezed == selected ? _self.selected : selected // ignore: cast_nullable_to_non_nullable
 as int?,score: null == score ? _self.score : score // ignore: cast_nullable_to_non_nullable
-as int,error: freezed == error ? _self.error : error // ignore: cast_nullable_to_non_nullable
+as int,answers: null == answers ? _self.answers : answers // ignore: cast_nullable_to_non_nullable
+as List<int>,error: freezed == error ? _self.error : error // ignore: cast_nullable_to_non_nullable
 as String?,
   ));
 }
@@ -168,10 +170,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( QuizPhase phase,  Quiz? quiz,  int index,  int? selected,  int score,  String? error)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( QuizPhase phase,  Quiz? quiz,  int index,  int? selected,  int score,  List<int> answers,  String? error)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _QuizPlayerState() when $default != null:
-return $default(_that.phase,_that.quiz,_that.index,_that.selected,_that.score,_that.error);case _:
+return $default(_that.phase,_that.quiz,_that.index,_that.selected,_that.score,_that.answers,_that.error);case _:
   return orElse();
 
 }
@@ -189,10 +191,10 @@ return $default(_that.phase,_that.quiz,_that.index,_that.selected,_that.score,_t
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( QuizPhase phase,  Quiz? quiz,  int index,  int? selected,  int score,  String? error)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( QuizPhase phase,  Quiz? quiz,  int index,  int? selected,  int score,  List<int> answers,  String? error)  $default,) {final _that = this;
 switch (_that) {
 case _QuizPlayerState():
-return $default(_that.phase,_that.quiz,_that.index,_that.selected,_that.score,_that.error);case _:
+return $default(_that.phase,_that.quiz,_that.index,_that.selected,_that.score,_that.answers,_that.error);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -209,10 +211,10 @@ return $default(_that.phase,_that.quiz,_that.index,_that.selected,_that.score,_t
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( QuizPhase phase,  Quiz? quiz,  int index,  int? selected,  int score,  String? error)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( QuizPhase phase,  Quiz? quiz,  int index,  int? selected,  int score,  List<int> answers,  String? error)?  $default,) {final _that = this;
 switch (_that) {
 case _QuizPlayerState() when $default != null:
-return $default(_that.phase,_that.quiz,_that.index,_that.selected,_that.score,_that.error);case _:
+return $default(_that.phase,_that.quiz,_that.index,_that.selected,_that.score,_that.answers,_that.error);case _:
   return null;
 
 }
@@ -224,7 +226,7 @@ return $default(_that.phase,_that.quiz,_that.index,_that.selected,_that.score,_t
 
 
 class _QuizPlayerState extends QuizPlayerState {
-  const _QuizPlayerState({this.phase = QuizPhase.loading, this.quiz, this.index = 0, this.selected, this.score = 0, this.error}): super._();
+  const _QuizPlayerState({this.phase = QuizPhase.loading, this.quiz, this.index = 0, this.selected, this.score = 0, final  List<int> answers = const <int>[], this.error}): _answers = answers,super._();
   
 
 @override@JsonKey() final  QuizPhase phase;
@@ -233,6 +235,15 @@ class _QuizPlayerState extends QuizPlayerState {
 /// Gecerli soruda secilen sik (null: henuz secilmedi).
 @override final  int? selected;
 @override@JsonKey() final  int score;
+/// Soru sirasiyla kullanicinin sectigi siklar (sonuc incelemesi icin).
+ final  List<int> _answers;
+/// Soru sirasiyla kullanicinin sectigi siklar (sonuc incelemesi icin).
+@override@JsonKey() List<int> get answers {
+  if (_answers is EqualUnmodifiableListView) return _answers;
+  // ignore: implicit_dynamic_type
+  return EqualUnmodifiableListView(_answers);
+}
+
 @override final  String? error;
 
 /// Create a copy of QuizPlayerState
@@ -245,16 +256,16 @@ _$QuizPlayerStateCopyWith<_QuizPlayerState> get copyWith => __$QuizPlayerStateCo
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _QuizPlayerState&&(identical(other.phase, phase) || other.phase == phase)&&(identical(other.quiz, quiz) || other.quiz == quiz)&&(identical(other.index, index) || other.index == index)&&(identical(other.selected, selected) || other.selected == selected)&&(identical(other.score, score) || other.score == score)&&(identical(other.error, error) || other.error == error));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _QuizPlayerState&&(identical(other.phase, phase) || other.phase == phase)&&(identical(other.quiz, quiz) || other.quiz == quiz)&&(identical(other.index, index) || other.index == index)&&(identical(other.selected, selected) || other.selected == selected)&&(identical(other.score, score) || other.score == score)&&const DeepCollectionEquality().equals(other._answers, _answers)&&(identical(other.error, error) || other.error == error));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,phase,quiz,index,selected,score,error);
+int get hashCode => Object.hash(runtimeType,phase,quiz,index,selected,score,const DeepCollectionEquality().hash(_answers),error);
 
 @override
 String toString() {
-  return 'QuizPlayerState(phase: $phase, quiz: $quiz, index: $index, selected: $selected, score: $score, error: $error)';
+  return 'QuizPlayerState(phase: $phase, quiz: $quiz, index: $index, selected: $selected, score: $score, answers: $answers, error: $error)';
 }
 
 
@@ -265,7 +276,7 @@ abstract mixin class _$QuizPlayerStateCopyWith<$Res> implements $QuizPlayerState
   factory _$QuizPlayerStateCopyWith(_QuizPlayerState value, $Res Function(_QuizPlayerState) _then) = __$QuizPlayerStateCopyWithImpl;
 @override @useResult
 $Res call({
- QuizPhase phase, Quiz? quiz, int index, int? selected, int score, String? error
+ QuizPhase phase, Quiz? quiz, int index, int? selected, int score, List<int> answers, String? error
 });
 
 
@@ -282,14 +293,15 @@ class __$QuizPlayerStateCopyWithImpl<$Res>
 
 /// Create a copy of QuizPlayerState
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? phase = null,Object? quiz = freezed,Object? index = null,Object? selected = freezed,Object? score = null,Object? error = freezed,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? phase = null,Object? quiz = freezed,Object? index = null,Object? selected = freezed,Object? score = null,Object? answers = null,Object? error = freezed,}) {
   return _then(_QuizPlayerState(
 phase: null == phase ? _self.phase : phase // ignore: cast_nullable_to_non_nullable
 as QuizPhase,quiz: freezed == quiz ? _self.quiz : quiz // ignore: cast_nullable_to_non_nullable
 as Quiz?,index: null == index ? _self.index : index // ignore: cast_nullable_to_non_nullable
 as int,selected: freezed == selected ? _self.selected : selected // ignore: cast_nullable_to_non_nullable
 as int?,score: null == score ? _self.score : score // ignore: cast_nullable_to_non_nullable
-as int,error: freezed == error ? _self.error : error // ignore: cast_nullable_to_non_nullable
+as int,answers: null == answers ? _self._answers : answers // ignore: cast_nullable_to_non_nullable
+as List<int>,error: freezed == error ? _self.error : error // ignore: cast_nullable_to_non_nullable
 as String?,
   ));
 }

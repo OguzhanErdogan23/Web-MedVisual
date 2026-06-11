@@ -29,16 +29,16 @@ class QuizzesScreen extends StatelessWidget {
           }
           if (state.status == ViewStatus.failure) {
             return ErrorView(
-              message: state.error ?? 'Quizler yuklenemedi.',
+              message: state.error ?? 'Quizler yüklenemedi.',
               onRetry: () => context.read<QuizzesCubit>().load(),
             );
           }
           if (state.quizzes.isEmpty) {
             return const EmptyView(
               icon: Icons.quiz_outlined,
-              title: 'Henuz quiz yok',
+              title: 'Henüz quiz yok',
               subtitle:
-                  'Panelden hazir bir dokuman secip quiz uretimini baslatin.',
+                  'Panelden hazır bir doküman seçip quiz üretimini başlatın.',
             );
           }
           return RefreshIndicator(
@@ -71,7 +71,7 @@ class _QuizTile extends StatelessWidget {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(dialogContext, false),
-            child: const Text('Vazgec'),
+            child: const Text('Vazgeç'),
           ),
           FilledButton(
             style: FilledButton.styleFrom(backgroundColor: AppColors.danger),
@@ -90,16 +90,16 @@ class _QuizTile extends StatelessWidget {
     final title = await showDialog<String>(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        title: const Text('Quizi yeniden adlandir'),
+        title: const Text('Quizi yeniden adlandır'),
         content: TextField(
           controller: controller,
           autofocus: true,
-          decoration: const InputDecoration(labelText: 'Baslik'),
+          decoration: const InputDecoration(labelText: 'Başlık'),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(dialogContext),
-            child: const Text('Vazgec'),
+            child: const Text('Vazgeç'),
           ),
           FilledButton(
             onPressed: () =>
@@ -109,6 +109,7 @@ class _QuizTile extends StatelessWidget {
         ],
       ),
     );
+    controller.dispose();
     if (title != null && title.isNotEmpty && title != quiz.title) {
       cubit.rename(quiz.id, title);
     }
@@ -156,7 +157,7 @@ class _QuizTile extends StatelessWidget {
                   value: 'rename',
                   child: ListTile(
                     leading: Icon(Icons.edit_outlined),
-                    title: Text('Yeniden adlandir'),
+                    title: Text('Yeniden adlandır'),
                     contentPadding: EdgeInsets.zero,
                   ),
                 ),

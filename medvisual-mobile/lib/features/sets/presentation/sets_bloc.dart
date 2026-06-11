@@ -33,6 +33,13 @@ final class SetRenameRequested extends SetsEvent {
   final String title;
 }
 
+final class SetCreateRequested extends SetsEvent {
+  const SetCreateRequested({required this.title, this.description});
+
+  final String title;
+  final String? description;
+}
+
 final class SetImportRequested extends SetsEvent {
   const SetImportRequested({
     required this.filePath,
@@ -64,6 +71,7 @@ class SetsBloc extends Bloc<SetsEvent, SetsState> {
     on<SetDeleteRequested>(_onDelete);
     on<SetRenameRequested>(_onRename);
     on<SetImportRequested>(_onImport);
+    on<SetCreateRequested>(_onCreate);
   }
 
   final SetsRepository _repo;
@@ -113,6 +121,19 @@ class SetsBloc extends Bloc<SetsEvent, SetsState> {
       await _load(emit, silent: true);
     } on ApiException catch (e) {
       emit(state.copyWith(importing: false, notice: e.message));
+      emit(state.copyWith(notice: null));
+    }
+  }
+
+  Future<void> _onCreate(
+      SetCreateRequested event, Emitter<SetsState> emit) async {
+    try {
+      await _repo.create(title: event.title, description: event.description);
+      emit(state.copyWith(notice: 'Deste oluşturuldu.'));
+      emit(state.copyWith(notice: null));
+      await _load(emit, silent: true);
+    } on ApiException catch (e) {
+      emit(state.copyWith(notice: e.message));
       emit(state.copyWith(notice: null));
     }
   }

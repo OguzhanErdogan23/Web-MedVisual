@@ -58,7 +58,7 @@ class ProgressChart extends StatelessWidget {
               padding: EdgeInsets.symmetric(vertical: 16),
               child: Center(
                 child: Text(
-                  'Henuz tekrar yok. Calismaya basladiginizda\n'
+                  'Henüz tekrar yok. Çalışmaya başladığınızda\n'
                   'ilerlemeniz burada gorunecek.',
                   textAlign: TextAlign.center,
                   style: TextStyle(color: Colors.blueGrey, fontSize: 13),

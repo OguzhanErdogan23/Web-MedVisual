@@ -38,7 +38,7 @@ class DocumentsScreen extends StatelessWidget {
         title: const Text('MedVisual'),
         actions: [
           IconButton(
-            tooltip: 'Kutuphane',
+            tooltip: 'Kütüphane',
             icon: const Icon(Icons.local_library_outlined),
             onPressed: () => showBooksSheet(context),
           ),
@@ -61,7 +61,7 @@ class DocumentsScreen extends StatelessWidget {
                       strokeWidth: 2, color: Colors.white),
                 )
               : const Icon(Icons.upload_file),
-          label: Text(state.uploading ? 'Yukleniyor...' : 'PDF Yukle'),
+          label: Text(state.uploading ? 'Yükleniyor...' : 'PDF Yükle'),
         ),
       ),
       body: BlocConsumer<DocumentsBloc, DocumentsState>(
@@ -79,7 +79,7 @@ class DocumentsScreen extends StatelessWidget {
           }
           if (state.status == ViewStatus.failure) {
             return ErrorView(
-              message: state.error ?? 'Dokumanlar yuklenemedi.',
+              message: state.error ?? 'Dokümanlar yüklenemedi.',
               onRetry: () =>
                   context.read<DocumentsBloc>().add(const DocumentsRefreshed()),
             );
@@ -97,7 +97,7 @@ class DocumentsScreen extends StatelessWidget {
                 Padding(
                   padding: const EdgeInsets.fromLTRB(20, 16, 20, 4),
                   child: Text(
-                    'Dokumanlar',
+                    'Dokümanlar',
                     style: Theme.of(context)
                         .textTheme
                         .titleMedium
@@ -109,9 +109,9 @@ class DocumentsScreen extends StatelessWidget {
                     padding: EdgeInsets.only(top: 48),
                     child: EmptyView(
                       icon: Icons.picture_as_pdf_outlined,
-                      title: 'Henuz dokuman yok',
+                      title: 'Henüz doküman yok',
                       subtitle:
-                          'Bir PDF yukleyin veya kutuphaneden hazir kitap secin.',
+                          'Bir PDF yükleyin veya kütüphaneden hazır kitap seçin.',
                     ),
                   )
                 else
@@ -132,13 +132,15 @@ class _StatsRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final items = [
-      (Icons.picture_as_pdf_outlined, 'Dokuman', stats.documents),
+      (Icons.picture_as_pdf_outlined, 'Doküman', stats.documents),
       (Icons.style_outlined, 'Deste', stats.sets),
       (Icons.crop_portrait, 'Kart', stats.cards),
       (Icons.quiz_outlined, 'Quiz', stats.quizzes),
       (Icons.alarm, 'Vadesi gelen', stats.dueNow),
-      (Icons.school_outlined, 'Calisilan', stats.studiedCards),
+      (Icons.school_outlined, 'Çalışılan', stats.studiedCards),
     ];
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
@@ -151,9 +153,13 @@ class _StatsRow extends StatelessWidget {
               padding:
                   const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
               decoration: BoxDecoration(
-                color: Colors.white,
+                // Koyu temada sabit beyaz yerine tema yuzeyi
+                color: scheme.surface,
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: const Color(0xFFE3E6F0)),
+                border: Border.all(
+                    color: isDark
+                        ? scheme.outlineVariant
+                        : const Color(0xFFE3E6F0)),
               ),
               child: Row(
                 mainAxisSize: MainAxisSize.min,
@@ -167,8 +173,8 @@ class _StatsRow extends StatelessWidget {
                   ),
                   const SizedBox(width: 4),
                   Text(label,
-                      style: const TextStyle(
-                          fontSize: 12, color: Colors.blueGrey)),
+                      style: TextStyle(
+                          fontSize: 12, color: scheme.onSurfaceVariant)),
                 ],
               ),
             ),
@@ -190,7 +196,7 @@ class _DocumentTile extends StatelessWidget {
       if (d.pageCount != null) '${d.pageCount} sayfa',
       if (d.status == 'failed' && d.error != null) d.error!,
       if (d.status == 'expired')
-        'DIP motorunda suresi doldu; yeniden yukleyin.',
+        'DIP motorunda süresi doldu; yeniden yükleyin.',
     ];
     return Card(
       child: ListTile(

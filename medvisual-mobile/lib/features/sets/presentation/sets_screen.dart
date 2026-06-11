@@ -50,12 +50,62 @@ class SetsScreen extends StatelessWidget {
         ],
       ),
     );
-    if (title == null) return; // Vazgecildi.
+    controller.dispose();
+    if (title == null) return; // Vazgeçildi.
     bloc.add(SetImportRequested(
       filePath: path,
       filename: file.name,
       setTitle: title.isEmpty ? null : title,
     ));
+  }
+
+  /// Boş deste oluşturma (web '+ Yeni Deste' paritesi).
+  Future<void> _createSet(BuildContext context) async {
+    final bloc = context.read<SetsBloc>();
+    final titleCtrl = TextEditingController();
+    final descCtrl = TextEditingController();
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Yeni Deste'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(
+              controller: titleCtrl,
+              autofocus: true,
+              decoration: const InputDecoration(labelText: 'Başlık'),
+            ),
+            const SizedBox(height: 8),
+            TextField(
+              controller: descCtrl,
+              decoration: const InputDecoration(
+                  labelText: 'Açıklama (isteğe bağlı)'),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, false),
+            child: const Text('Vazgeç'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(dialogContext, true),
+            child: const Text('Oluştur'),
+          ),
+        ],
+      ),
+    );
+    final title = titleCtrl.text.trim();
+    final desc = descCtrl.text.trim();
+    titleCtrl.dispose();
+    descCtrl.dispose();
+    if (ok == true && title.isNotEmpty) {
+      bloc.add(SetCreateRequested(
+        title: title,
+        description: desc.isEmpty ? null : desc,
+      ));
+    }
   }
 
   @override
@@ -81,6 +131,11 @@ class SetsScreen extends StatelessWidget {
                     onPressed: () => _importCards(context),
                   ),
           ),
+          IconButton(
+            icon: const Icon(Icons.add),
+            tooltip: 'Yeni Deste',
+            onPressed: () => _createSet(context),
+          ),
         ],
       ),
       body: BlocConsumer<SetsBloc, SetsState>(
@@ -95,16 +150,17 @@ class SetsScreen extends StatelessWidget {
           }
           if (state.status == ViewStatus.failure) {
             return ErrorView(
-              message: state.error ?? 'Desteler yuklenemedi.',
+              message: state.error ?? 'Desteler yüklenemedi.',
               onRetry: () => context.read<SetsBloc>().add(const SetsStarted()),
             );
           }
           if (state.sets.isEmpty) {
             return const EmptyView(
               icon: Icons.style_outlined,
-              title: 'Henuz deste yok',
+              title: 'Henüz deste yok',
               subtitle:
-                  'Panelden hazir bir dokuman secip kart uretimini baslatin.',
+                  'Panelden bir doküman seçip kart üretin, "+" ile boş deste oluşturun '
+                  'veya kart dosyası içe aktarın.',
             );
           }
           return RefreshIndicator(
@@ -134,16 +190,16 @@ class _SetTile extends StatelessWidget {
     final title = await showDialog<String>(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        title: const Text('Desteyi yeniden adlandir'),
+        title: const Text('Desteyi yeniden adlandır'),
         content: TextField(
           controller: controller,
           autofocus: true,
-          decoration: const InputDecoration(labelText: 'Baslik'),
+          decoration: const InputDecoration(labelText: 'Başlık'),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(dialogContext),
-            child: const Text('Vazgec'),
+            child: const Text('Vazgeç'),
           ),
           FilledButton(
             onPressed: () =>
@@ -153,6 +209,7 @@ class _SetTile extends StatelessWidget {
         ],
       ),
     );
+    controller.dispose();
     if (title != null && title.isNotEmpty) {
       bloc.add(SetRenameRequested(set.id, title));
     }
@@ -164,11 +221,11 @@ class _SetTile extends StatelessWidget {
       context: context,
       builder: (dialogContext) => AlertDialog(
         title: const Text('Deste silinsin mi?'),
-        content: Text('"${set.title}" ve tum kartlari silinecek.'),
+        content: Text('"${set.title}" ve tüm kartları silinecek.'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(dialogContext, false),
-            child: const Text('Vazgec'),
+            child: const Text('Vazgeç'),
           ),
           FilledButton(
             style: FilledButton.styleFrom(backgroundColor: AppColors.danger),
@@ -215,7 +272,7 @@ class _SetTile extends StatelessWidget {
                   value: 'rename',
                   child: ListTile(
                     leading: Icon(Icons.edit_outlined),
-                    title: Text('Yeniden adlandir'),
+                    title: Text('Yeniden adlandır'),
                     contentPadding: EdgeInsets.zero,
                   ),
                 ),

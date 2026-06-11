@@ -14,7 +14,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$StudyHomeState {
 
- ViewStatus get status; List<CardSet> get sets; int get totalDue; int get newCount; String? get error;
+ ViewStatus get status; List<CardSet> get sets; int get totalDue; int get newCount; StudyHistory? get history; String? get error;
 /// Create a copy of StudyHomeState
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -25,16 +25,16 @@ $StudyHomeStateCopyWith<StudyHomeState> get copyWith => _$StudyHomeStateCopyWith
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is StudyHomeState&&(identical(other.status, status) || other.status == status)&&const DeepCollectionEquality().equals(other.sets, sets)&&(identical(other.totalDue, totalDue) || other.totalDue == totalDue)&&(identical(other.newCount, newCount) || other.newCount == newCount)&&(identical(other.error, error) || other.error == error));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is StudyHomeState&&(identical(other.status, status) || other.status == status)&&const DeepCollectionEquality().equals(other.sets, sets)&&(identical(other.totalDue, totalDue) || other.totalDue == totalDue)&&(identical(other.newCount, newCount) || other.newCount == newCount)&&(identical(other.history, history) || other.history == history)&&(identical(other.error, error) || other.error == error));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,status,const DeepCollectionEquality().hash(sets),totalDue,newCount,error);
+int get hashCode => Object.hash(runtimeType,status,const DeepCollectionEquality().hash(sets),totalDue,newCount,history,error);
 
 @override
 String toString() {
-  return 'StudyHomeState(status: $status, sets: $sets, totalDue: $totalDue, newCount: $newCount, error: $error)';
+  return 'StudyHomeState(status: $status, sets: $sets, totalDue: $totalDue, newCount: $newCount, history: $history, error: $error)';
 }
 
 
@@ -45,11 +45,11 @@ abstract mixin class $StudyHomeStateCopyWith<$Res>  {
   factory $StudyHomeStateCopyWith(StudyHomeState value, $Res Function(StudyHomeState) _then) = _$StudyHomeStateCopyWithImpl;
 @useResult
 $Res call({
- ViewStatus status, List<CardSet> sets, int totalDue, int newCount, String? error
+ ViewStatus status, List<CardSet> sets, int totalDue, int newCount, StudyHistory? history, String? error
 });
 
 
-
+$StudyHistoryCopyWith<$Res>? get history;
 
 }
 /// @nodoc
@@ -62,17 +62,30 @@ class _$StudyHomeStateCopyWithImpl<$Res>
 
 /// Create a copy of StudyHomeState
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? status = null,Object? sets = null,Object? totalDue = null,Object? newCount = null,Object? error = freezed,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? status = null,Object? sets = null,Object? totalDue = null,Object? newCount = null,Object? history = freezed,Object? error = freezed,}) {
   return _then(_self.copyWith(
 status: null == status ? _self.status : status // ignore: cast_nullable_to_non_nullable
 as ViewStatus,sets: null == sets ? _self.sets : sets // ignore: cast_nullable_to_non_nullable
 as List<CardSet>,totalDue: null == totalDue ? _self.totalDue : totalDue // ignore: cast_nullable_to_non_nullable
 as int,newCount: null == newCount ? _self.newCount : newCount // ignore: cast_nullable_to_non_nullable
-as int,error: freezed == error ? _self.error : error // ignore: cast_nullable_to_non_nullable
+as int,history: freezed == history ? _self.history : history // ignore: cast_nullable_to_non_nullable
+as StudyHistory?,error: freezed == error ? _self.error : error // ignore: cast_nullable_to_non_nullable
 as String?,
   ));
 }
+/// Create a copy of StudyHomeState
+/// with the given fields replaced by the non-null parameter values.
+@override
+@pragma('vm:prefer-inline')
+$StudyHistoryCopyWith<$Res>? get history {
+    if (_self.history == null) {
+    return null;
+  }
 
+  return $StudyHistoryCopyWith<$Res>(_self.history!, (value) {
+    return _then(_self.copyWith(history: value));
+  });
+}
 }
 
 
@@ -154,10 +167,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( ViewStatus status,  List<CardSet> sets,  int totalDue,  int newCount,  String? error)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( ViewStatus status,  List<CardSet> sets,  int totalDue,  int newCount,  StudyHistory? history,  String? error)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _StudyHomeState() when $default != null:
-return $default(_that.status,_that.sets,_that.totalDue,_that.newCount,_that.error);case _:
+return $default(_that.status,_that.sets,_that.totalDue,_that.newCount,_that.history,_that.error);case _:
   return orElse();
 
 }
@@ -175,10 +188,10 @@ return $default(_that.status,_that.sets,_that.totalDue,_that.newCount,_that.erro
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( ViewStatus status,  List<CardSet> sets,  int totalDue,  int newCount,  String? error)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( ViewStatus status,  List<CardSet> sets,  int totalDue,  int newCount,  StudyHistory? history,  String? error)  $default,) {final _that = this;
 switch (_that) {
 case _StudyHomeState():
-return $default(_that.status,_that.sets,_that.totalDue,_that.newCount,_that.error);case _:
+return $default(_that.status,_that.sets,_that.totalDue,_that.newCount,_that.history,_that.error);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -195,10 +208,10 @@ return $default(_that.status,_that.sets,_that.totalDue,_that.newCount,_that.erro
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( ViewStatus status,  List<CardSet> sets,  int totalDue,  int newCount,  String? error)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( ViewStatus status,  List<CardSet> sets,  int totalDue,  int newCount,  StudyHistory? history,  String? error)?  $default,) {final _that = this;
 switch (_that) {
 case _StudyHomeState() when $default != null:
-return $default(_that.status,_that.sets,_that.totalDue,_that.newCount,_that.error);case _:
+return $default(_that.status,_that.sets,_that.totalDue,_that.newCount,_that.history,_that.error);case _:
   return null;
 
 }
@@ -210,7 +223,7 @@ return $default(_that.status,_that.sets,_that.totalDue,_that.newCount,_that.erro
 
 
 class _StudyHomeState implements StudyHomeState {
-  const _StudyHomeState({this.status = ViewStatus.initial, final  List<CardSet> sets = const <CardSet>[], this.totalDue = 0, this.newCount = 0, this.error}): _sets = sets;
+  const _StudyHomeState({this.status = ViewStatus.initial, final  List<CardSet> sets = const <CardSet>[], this.totalDue = 0, this.newCount = 0, this.history, this.error}): _sets = sets;
   
 
 @override@JsonKey() final  ViewStatus status;
@@ -223,6 +236,7 @@ class _StudyHomeState implements StudyHomeState {
 
 @override@JsonKey() final  int totalDue;
 @override@JsonKey() final  int newCount;
+@override final  StudyHistory? history;
 @override final  String? error;
 
 /// Create a copy of StudyHomeState
@@ -235,16 +249,16 @@ _$StudyHomeStateCopyWith<_StudyHomeState> get copyWith => __$StudyHomeStateCopyW
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _StudyHomeState&&(identical(other.status, status) || other.status == status)&&const DeepCollectionEquality().equals(other._sets, _sets)&&(identical(other.totalDue, totalDue) || other.totalDue == totalDue)&&(identical(other.newCount, newCount) || other.newCount == newCount)&&(identical(other.error, error) || other.error == error));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _StudyHomeState&&(identical(other.status, status) || other.status == status)&&const DeepCollectionEquality().equals(other._sets, _sets)&&(identical(other.totalDue, totalDue) || other.totalDue == totalDue)&&(identical(other.newCount, newCount) || other.newCount == newCount)&&(identical(other.history, history) || other.history == history)&&(identical(other.error, error) || other.error == error));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,status,const DeepCollectionEquality().hash(_sets),totalDue,newCount,error);
+int get hashCode => Object.hash(runtimeType,status,const DeepCollectionEquality().hash(_sets),totalDue,newCount,history,error);
 
 @override
 String toString() {
-  return 'StudyHomeState(status: $status, sets: $sets, totalDue: $totalDue, newCount: $newCount, error: $error)';
+  return 'StudyHomeState(status: $status, sets: $sets, totalDue: $totalDue, newCount: $newCount, history: $history, error: $error)';
 }
 
 
@@ -255,11 +269,11 @@ abstract mixin class _$StudyHomeStateCopyWith<$Res> implements $StudyHomeStateCo
   factory _$StudyHomeStateCopyWith(_StudyHomeState value, $Res Function(_StudyHomeState) _then) = __$StudyHomeStateCopyWithImpl;
 @override @useResult
 $Res call({
- ViewStatus status, List<CardSet> sets, int totalDue, int newCount, String? error
+ ViewStatus status, List<CardSet> sets, int totalDue, int newCount, StudyHistory? history, String? error
 });
 
 
-
+@override $StudyHistoryCopyWith<$Res>? get history;
 
 }
 /// @nodoc
@@ -272,18 +286,31 @@ class __$StudyHomeStateCopyWithImpl<$Res>
 
 /// Create a copy of StudyHomeState
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? status = null,Object? sets = null,Object? totalDue = null,Object? newCount = null,Object? error = freezed,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? status = null,Object? sets = null,Object? totalDue = null,Object? newCount = null,Object? history = freezed,Object? error = freezed,}) {
   return _then(_StudyHomeState(
 status: null == status ? _self.status : status // ignore: cast_nullable_to_non_nullable
 as ViewStatus,sets: null == sets ? _self._sets : sets // ignore: cast_nullable_to_non_nullable
 as List<CardSet>,totalDue: null == totalDue ? _self.totalDue : totalDue // ignore: cast_nullable_to_non_nullable
 as int,newCount: null == newCount ? _self.newCount : newCount // ignore: cast_nullable_to_non_nullable
-as int,error: freezed == error ? _self.error : error // ignore: cast_nullable_to_non_nullable
+as int,history: freezed == history ? _self.history : history // ignore: cast_nullable_to_non_nullable
+as StudyHistory?,error: freezed == error ? _self.error : error // ignore: cast_nullable_to_non_nullable
 as String?,
   ));
 }
 
+/// Create a copy of StudyHomeState
+/// with the given fields replaced by the non-null parameter values.
+@override
+@pragma('vm:prefer-inline')
+$StudyHistoryCopyWith<$Res>? get history {
+    if (_self.history == null) {
+    return null;
+  }
 
+  return $StudyHistoryCopyWith<$Res>(_self.history!, (value) {
+    return _then(_self.copyWith(history: value));
+  });
+}
 }
 
 // dart format on
