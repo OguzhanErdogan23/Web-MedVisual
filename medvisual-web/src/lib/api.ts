@@ -19,6 +19,7 @@ async function request<T>(
   method: 'GET' | 'POST' | 'PATCH' | 'DELETE',
   path: string,
   options: RequestOptions = {},
+  authRetried = false,
 ): Promise<T> {
   const token = await getAccessToken()
   const headers: Record<string, string> = {}
@@ -54,6 +55,14 @@ async function request<T>(
   }
 
   if (!res.ok) {
+    // 401: token süresi dolmuş olabilir — oturumu yenileyip isteği BİR kez
+    // tekrarla; yenileme de başarısızsa çıkış yap (RequireAuth login'e atar,
+    // SIGNED_OUT dinleyicisi önbelleği temizler).
+    if (res.status === 401 && !authRetried) {
+      const { data } = await supabase.auth.refreshSession()
+      if (data.session) return request<T>(method, path, options, true)
+      await supabase.auth.signOut()
+    }
     let message = `İstek başarısız oldu (${res.status})`
     try {
       const data = await res.json()

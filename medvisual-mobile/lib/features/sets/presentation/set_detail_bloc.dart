@@ -174,7 +174,7 @@ class SetDetailBloc extends Bloc<SetDetailEvent, SetDetailState> {
 
   void _onCardReplaced(CardReplaced event, Emitter<SetDetailState> emit) {
     _replaceCard(emit, event.card);
-    _notify(emit, 'Gorsel karta eklendi.');
+    _notify(emit, 'Görsel karta eklendi.');
   }
 
   Future<void> _onCardImageRemove(
@@ -182,7 +182,7 @@ class SetDetailBloc extends Bloc<SetDetailEvent, SetDetailState> {
     try {
       final updated = await _repo.removeImage(event.cardId);
       _replaceCard(emit, updated);
-      _notify(emit, 'Gorsel kaldirildi.');
+      _notify(emit, 'Görsel kaldırıldı.');
     } on ApiException catch (e) {
       _notify(emit, e.message);
     }
@@ -193,7 +193,7 @@ class SetDetailBloc extends Bloc<SetDetailEvent, SetDetailState> {
     try {
       await _repo.autoImages(setId,
           range: event.range, documentId: event.documentId);
-      _notify(emit, 'Toplu gorsel uretimi baslatildi.');
+      _notify(emit, 'Toplu görsel üretimi başlatıldı.');
       // Sunucu durumu `generating`e cekilir; poll ile ilerleme izlenir.
       await _load(emit, silent: true);
     } on ApiException catch (e) {

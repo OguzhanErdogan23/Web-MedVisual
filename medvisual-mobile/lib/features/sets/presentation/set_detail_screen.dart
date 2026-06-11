@@ -290,14 +290,33 @@ class _SetContent extends StatelessWidget {
         subtitle: 'Sağ alttaki + butonuyla elle kart ekleyebilirsiniz.',
       );
     }
+    final description = set.description;
+    final hasDescription = description != null && description.isNotEmpty;
     return ListView.builder(
       padding: const EdgeInsets.only(top: 8, bottom: 88),
-      itemCount: set.cards.length,
-      itemBuilder: (context, i) => _FlashcardTile(
-        card: set.cards[i],
-        index: i,
-        documentId: set.documentId,
-      ),
+      // Ilk satir: deste aciklamasi (sayfa araligi + uretim yontemi rozeti —
+      // web SetDetail paritesi, PRD'nin llm_enhanced gosterimi)
+      itemCount: set.cards.length + (hasDescription ? 1 : 0),
+      itemBuilder: (context, i) {
+        if (hasDescription && i == 0) {
+          return Padding(
+            padding: const EdgeInsets.fromLTRB(20, 4, 20, 8),
+            child: Text(
+              description,
+              style: TextStyle(
+                fontSize: 12,
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+              ),
+            ),
+          );
+        }
+        final cardIndex = hasDescription ? i - 1 : i;
+        return _FlashcardTile(
+          card: set.cards[cardIndex],
+          index: cardIndex,
+          documentId: set.documentId,
+        );
+      },
     );
   }
 }
