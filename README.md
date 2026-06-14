@@ -94,9 +94,6 @@ cd medvisual-mobile && flutter analyze && flutter test
 
 ## Notlar
 
-- PDF'ler buluta yüklenmez; DIP motorunun `work/` dizininde lokal kalır
-  (ücretsiz kota disiplini). `work/` silinirse doküman "Süresi doldu"
+- PDF'ler buluta yüklenmez; DIP motorunun `work/` dizininde lokal kalır. `work/` silinirse doküman "Süresi doldu"
   durumuna düşer ve yeniden yükleme istenir; kartlar ve seçilmiş
   görseller etkilenmez (Storage'dadır).
-- Supabase ücretsiz projeleri ~1 hafta inaktivitede uyur; demo öncesi
-  dashboard'dan uyandırın.
